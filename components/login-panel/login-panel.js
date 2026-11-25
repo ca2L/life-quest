@@ -26,6 +26,12 @@ function delay(ms) {
 }
 
 Component({
+    // 各页面的登录引导语由页面传入，组件内不再出现第二套重复文案。
+    properties: {
+        eyebrow: { type: String, value: 'START YOUR QUEST' },
+        title: { type: String, value: '开启你的冒险' },
+        desc: { type: String, value: '邮箱验证码登录 / 注册，无需密码' },
+    },
     data: {
         email: '',
         code: '',

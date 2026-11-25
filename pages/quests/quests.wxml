@@ -5,12 +5,7 @@
   </view>
 
   <view wx:elif="{{authState === 'signed-out'}}" class="state-card login-wrap">
-    <view class="login-hero">
-      <text class="login-eyebrow">LIFE · MAIN · QUEST</text>
-      <text class="login-title">把一生，活成\n一场值得通关的冒险</text>
-      <text class="login-desc">人生主线任务 · 记录你的进度、故事与足迹</text>
-    </view>
-    <login-panel bind:signedin="onSignedIn" />
+    <login-panel eyebrow="LIFE · MAIN · QUEST" title="把一生，活成\n一场值得通关的冒险" desc="人生主线任务 · 记录你的进度、故事与足迹" bind:signedin="onSignedIn" />
   </view>
 
   <view wx:else class="content">
@@ -175,4 +170,5 @@
     </view>
   </view>
 </view>
+  <view class="player-spacer"></view>
   <mini-player />

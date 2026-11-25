@@ -249,4 +249,5 @@
     </view>
   </view>
 </view>
+<view class="player-spacer"></view>
 <mini-player />

@@ -56,7 +56,9 @@
 
 .section-head { display: flex; margin: 36rpx 4rpx 16rpx; align-items: center; justify-content: space-between; }
 .section-title { color: #17152b; font-size: 30rpx; font-weight: 600; }
-.section-tip { color: #a09ab8; font-size: 22rpx; }
+.section-tip { color: #7d769b; font-size: 22rpx; }
+/* 可折叠区标题：加大触控区，提示文字与主标题分列两端 */
+.tap-head { padding: 10rpx 0; }
 
 /* 成就进度概览 */
 .achievement-overview {

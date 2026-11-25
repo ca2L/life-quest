@@ -5,12 +5,7 @@
   </view>
 
   <view wx:elif="{{authState === 'signed-out'}}" class="state-card login-wrap">
-    <view class="login-hero">
-      <text class="login-eyebrow">LIFE FOOTPRINTS</text>
-      <text class="login-title">人生足迹</text>
-      <text class="login-desc">登录后，记录你走过的每一段路。</text>
-    </view>
-    <login-panel bind:signedin="onSignedIn" />
+    <login-panel eyebrow="LIFE FOOTPRINTS" title="人生足迹" desc="登录后，记录你走过的每一段路。" bind:signedin="onSignedIn" />
   </view>
 
   <view wx:else class="content">
@@ -27,7 +22,7 @@
     </view>
 
     <!-- BGM 入口：统计来自真实绑定映射，点「去关联」可给已有足迹换歌 -->
-    <view class="bgm-entry" bindtap="openForm">
+    <view class="bgm-entry" bindtap="openBgmSheet">
       <text class="be-icon">♫</text>
       <view class="be-body">
         <text class="be-title">{{bgmBoundCount}} / {{allFeet.length}} 段足迹已关联 BGM</text>
@@ -358,4 +353,5 @@
     </view>
   </view>
 </view>
+  <view class="player-spacer"></view>
   <mini-player />
