@@ -156,12 +156,20 @@
           </view>
         </view>
 
-        <view class="ov-mile-label decade-label">十年进度</view>
+        <view class="ov-mile-label decade-label">人生回目 · 十年进度</view>
         <view class="decade-bars">
-          <view class="dbar-row {{item.isCurrent ? 'current' : ''}}" wx:for="{{decadeBlocks}}" wx:key="startAge">
-            <text class="dbar-label">{{item.label}}</text>
-            <view class="dbar-track"><view class="dbar-fill" style="width: {{item.pct}}%"></view></view>
-            <text class="dbar-pct">{{item.pct}}%</text>
+          <view class="dbar-row chapter-card {{item.isCurrent ? 'current' : ''}} {{item.pct === 0 ? 'future' : ''}}"
+            wx:for="{{decadeBlocks}}" wx:key="startAge">
+            <text class="db-chapter-mark">{{item.chapter}}</text>
+            <view class="db-copy">
+              <view class="db-title-row">
+                <text class="db-title">{{item.stage}}</text>
+                <text class="db-age">{{item.label}} 岁</text>
+              </view>
+              <view class="db-track"><view class="db-fill" style="width: {{item.pct}}%"></view></view>
+            </view>
+            <text class="db-pct">{{item.pct}}%</text>
+            <text class="db-arrow">›</text>
           </view>
         </view>
         <view class="ov-note">每个十年按已度过的年份计算完成度</view>

@@ -94,6 +94,10 @@ function buildLifeGrid(birthday, targetAge) {
   }
 }
 
+// 中文回目序号：第01回 / 第02回 …（对标游戏数据库的章节列表视觉）
+const CN_NUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
+  '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十']
+
 // 全景数据：按「十年」分组的块视图。每个十年块含 10 个小格（每年一格），
 // 比「每年一条横带」可读性高得多，也避免了 6240 个周格子的卡顿。
 function buildDecadeBlocks(grid) {
@@ -118,6 +122,7 @@ function buildDecadeBlocks(grid) {
       label: `${startAge}–${endAge - 1}`,
       startAge,
       stage: stageOf(startAge).name,
+      chapter: '第' + (CN_NUM[d + 1] || (d + 1)) + '回',
       isCurrent: grid.currentYearIndex >= startAge && grid.currentYearIndex < endAge,
       pct: Math.round((decadesLived / years.length) * 100),
       years,
