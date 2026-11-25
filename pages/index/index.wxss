@@ -850,6 +850,48 @@
 .entry-duo .fpe-text { width: 100%; margin-left: 0; }
 .entry-duo .we-bar { margin-top: 10rpx; }
 
+/* Pastel 分类卡：对标小宇宙分类卡，四张入口各用一种柔和主题色编码，
+   只换配色不动结构/文案，信息一条不少。 */
+.entry-duo .works-entry {
+  background: var(--tint-purple-bg, #eeedfe);
+  border: 2rpx solid var(--tint-purple-ico, #cecbf6);
+}
+.entry-duo .works-entry .we-kicker { color: var(--tint-purple-ink, #534ab7); }
+.entry-duo .works-entry .we-title { color: var(--ink-1, #17152b); }
+.entry-duo .works-entry .we-sub { color: var(--tint-purple-ink, #534ab7); }
+.entry-duo .sc-card {
+  flex-direction: column; align-items: flex-start;
+  background: var(--tint-pink-bg, #fbeaf0);
+  border: 2rpx solid var(--tint-pink-ico, #f4c0d1);
+}
+.entry-duo .sc-card .sc-icon { background: #ffffff; }
+.entry-duo .sc-card .sc-eyebrow { color: var(--tint-pink-ink, #993556); }
+.entry-duo .sc-card .sc-title { color: var(--ink-1, #17152b); }
+.entry-duo .sc-card .sc-sub { color: var(--tint-pink-ink, #993556); }
+.entry-duo .world-entry {
+  background: var(--tint-blue-bg, #e6f1fb);
+  border: 2rpx solid var(--tint-blue-ico, #b5d4f4);
+}
+.entry-duo .world-entry .we-stars { display: none; }
+.entry-duo .world-entry .we-icon { background: #ffffff; }
+.entry-duo .world-entry .we-eyebrow { color: var(--tint-blue-ink, #185fa5); }
+.entry-duo .world-entry .we-title { color: var(--ink-1, #17152b); }
+.entry-duo .world-entry .we-sub { color: var(--tint-blue-ink, #185fa5); }
+.entry-duo .world-entry .we-bar-fill { background: var(--tint-blue-ink, #185fa5); }
+.entry-duo .footprint-entry {
+  background: var(--tint-green-bg, #eaf3de);
+  border: 2rpx solid var(--tint-green-ico, #c0dd97);
+}
+.entry-duo .footprint-entry .fpe-icon { background: #ffffff; }
+.entry-duo .footprint-entry .fpe-eyebrow { color: var(--tint-green-ink, #3b6d11); }
+.entry-duo .footprint-entry .fpe-title { color: var(--ink-1, #17152b); }
+.entry-duo .footprint-entry .fpe-sub { color: var(--tint-green-ink, #3b6d11); }
+/* 浅底卡细节：柔和阴影替代原深色投影；进度条轨道与图标改为主题色 */
+.entry-duo .world-entry,
+.entry-duo .footprint-entry { box-shadow: 0 6rpx 20rpx rgba(26, 22, 51, 0.05); }
+.entry-duo .world-entry .we-bar { background: #ffffff; }
+.entry-duo .footprint-entry .fpe-icon { color: var(--tint-green-ink, #3b6d11); }
+
 /* ── 音乐 tab：每日推荐 ── */
 .rec-list { margin-top: 8rpx; }
 .rec-item {

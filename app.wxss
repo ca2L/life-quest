@@ -23,6 +23,14 @@ page {
   --brand: #6f5ce8;
   --surface: #ffffff;
   --canvas: #f6f6fa;
+  /* Pastel 分类色板：对标小宇宙分类卡 / 家庭财务的柔和色块编码。
+     每个分类 = 一组「淡底 + 主题字色 + 图标底」三件套，保证对比度又克制。 */
+  --tint-blue-bg: #e6f1fb;   --tint-blue-ink: #185fa5;   --tint-blue-ico: #b5d4f4;
+  --tint-green-bg: #eaf3de;  --tint-green-ink: #3b6d11;  --tint-green-ico: #c0dd97;
+  --tint-amber-bg: #faeeda;  --tint-amber-ink: #854f0b;  --tint-amber-ico: #fac775;
+  --tint-pink-bg: #fbeaf0;   --tint-pink-ink: #993556;    --tint-pink-ico: #f4c0d1;
+  --tint-purple-bg: #eeedfe; --tint-purple-ink: #534ab7;  --tint-purple-ico: #cecbf6;
+  --tint-teal-bg: #e1f5ee;   --tint-teal-ink: #0f6e56;    --tint-teal-ico: #9fe1cb;
   /* 阴影 */
   --shadow-card: 0 6rpx 20rpx rgba(26, 22, 51, 0.05);
   /* 层级：内容 < dock < sheet < dialog < overlay < toast
