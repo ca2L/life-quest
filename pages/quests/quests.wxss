@@ -163,7 +163,7 @@
 .empty-btn { padding: 16rpx 30rpx; border-radius: 18rpx; background: #ffffff; color: #5a49c4; font-size: 25rpx; }
 .empty-btn.primary { background: #6f5ce8; color: #ffffff; }
 
-.modal-mask { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(26, 22, 51, 0.5); }
+.modal-mask { position: fixed; inset: 0; z-index: var(--z-sheet, 100); display: flex; align-items: center; justify-content: center; background: rgba(26, 22, 51, 0.5); }
 .modal { box-sizing: border-box; width: 88%; max-height: 88vh; padding: 36rpx; overflow-y: auto; border-radius: 28rpx; background: #ffffff; }
 .modal-title { display: block; color: #17152b; font-size: 34rpx; font-weight: 700; }
 .modal-sub { display: block; margin-top: 10rpx; color: #8a85a5; font-size: 24rpx; }

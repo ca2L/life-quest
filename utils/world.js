@@ -586,8 +586,11 @@ async function createCharacter(payload, characterAccess) {
     }
     const res = await characterAccess.create(row)
     if (!res.error && res.data && res.data.id != null) {
-      const merged = next.map((c) => (String(c.id) === String(temp.id)
-        ? normalizeCharacter(Object.assign({}, c, { id: res.data.id })) : c))
+      // 云端成功后用云端 id 替换临时 id，并去掉同名的临时副本，避免同一角色出现两次
+      const cloudId = res.data.id
+      const merged = next
+        .filter((c) => String(c.id) !== String(temp.id) && String(c.id) !== String(cloudId))
+        .concat(normalizeCharacter(Object.assign({}, temp, { id: cloudId })))
       writeLocalCharacters(merged)
       return merged
     }

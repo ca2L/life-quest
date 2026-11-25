@@ -228,24 +228,31 @@ Page({
   },
 
   async checkIn(event) {
-    const id = event.currentTarget.dataset.id
-    const q = this.data.quests.find((item) => item.id === id)
-    if (!q) return
-    const res = await checkInQuest(q)
-    if (res.error) { wx.showToast({ title: res.error.message || '打卡失败', icon: 'none' }); return }
-    if (res.justCompleted && res.claim && !res.claim.error) {
-      const c = res.claim
-      const title = c.reward.label ? `${c.reward.label} +${c.reward.xp} XP` : `+${c.reward.xp} XP`
-      wx.showModal({
-        title: c.leveledUp ? `升级！Lv.${c.newLevel}` : '任务完成',
-        content: `${title}${c.leveledUp ? '\n解锁新的称号与更高目标。' : ''}`,
-        showCancel: false,
-        confirmText: '继续冒险',
-      })
-    } else {
-      wx.showToast({ title: '打卡成功', icon: 'success' })
+    // 打卡涉及进度写入与奖励发放，连点必须串行，否则同一任务会被重复计次/重复发奖
+    if (this._checkingIn) return
+    this._checkingIn = true
+    try {
+      const id = event.currentTarget.dataset.id
+      const q = this.data.quests.find((item) => item.id === id)
+      if (!q) return
+      const res = await checkInQuest(q)
+      if (res.error) { wx.showToast({ title: res.error.message || '打卡失败', icon: 'none' }); return }
+      if (res.justCompleted && res.claim && !res.claim.error) {
+        const c = res.claim
+        const title = c.reward.label ? `${c.reward.label} +${c.reward.xp} XP` : `+${c.reward.xp} XP`
+        wx.showModal({
+          title: c.leveledUp ? `升级！Lv.${c.newLevel}` : '任务完成',
+          content: `${title}${c.leveledUp ? '\n解锁新的称号与更高目标。' : ''}`,
+          showCancel: false,
+          confirmText: '继续冒险',
+        })
+      } else {
+        wx.showToast({ title: '打卡成功', icon: 'success' })
+      }
+      await this.loadQuests()
+    } finally {
+      this._checkingIn = false
     }
-    await this.loadQuests()
   },
 
   openTemplates() { this.setData({ showTemplates: true }) },
@@ -263,13 +270,30 @@ Page({
   },
 
   async applyAllTemplates() {
-    for (let i = 0; i < TEMPLATES.length; i++) {
-      const res = await questAccess.create(TEMPLATES[i])
-      if (res.error) { wx.showToast({ title: res.error.message || '添加失败', icon: 'none' }); return }
+    if (this._applyingTemplates) return
+    this._applyingTemplates = true
+    let added = 0
+    try {
+      for (let i = 0; i < TEMPLATES.length; i++) {
+        const res = await questAccess.create(TEMPLATES[i])
+        if (res.error) {
+          wx.showToast({
+            title: added ? `已添加 ${added} 个，其余失败：${res.error.message || '未知错误'}` : (res.error.message || '添加失败'),
+            icon: 'none',
+            duration: 3000,
+          })
+          break
+        }
+        added += 1
+      }
+      if (added) {
+        wx.showToast({ title: `已添加 ${added} 个模板任务`, icon: 'success' })
+        this.setData({ showTemplates: false })
+        await this.loadQuests()
+      }
+    } finally {
+      this._applyingTemplates = false
     }
-    wx.showToast({ title: '已添加 5 个模板任务', icon: 'success' })
-    this.setData({ showTemplates: false })
-    await this.loadQuests()
   },
 
   async resetProgress(event) {

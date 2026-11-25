@@ -73,6 +73,21 @@ const SCENES = [
     track: '支线也很香',
     tip: '给「好好吃饭」这条支线记一次打卡。',
   },
+  {
+    key: 'country', icon: '🤠', name: '乡村', genre: 'Country / Americana',
+    track: '回到旷野，慢慢走',
+    tip: '把一条支线任务放到路上做，进度一样算。',
+  },
+  {
+    key: 'gaming', icon: '🎮', name: '游戏 BGM', genre: 'Game OST / Chiptune',
+    track: '给今天开一局',
+    tip: '把主线当成关卡，先通关最容易的那一个。',
+  },
+  {
+    key: 'zelda', icon: '🗡️', name: '塞尔达', genre: '海拉鲁风格 · 管弦致敬',
+    track: '去海拉鲁散个步',
+    tip: '像林克一样：地图先点亮一格，再走下一格。',
+  },
 ]
 
 function sceneOf(key) {

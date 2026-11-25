@@ -4,8 +4,10 @@ const player = require('../../utils/audio-player')
 
 Component({
   properties: {
-    // 弹层/MV 浮窗出现时由页面置 true，避免两个右下角浮层叠在一起
+    // 弹层/MV 浮窗出现时由页面置 true，避免两个浮层叠在一起
     hidden: { type: Boolean, value: false },
+    // true = 作为页面 flex 布局的固定停靠项（首页）；false = 旧版 fixed 浮层（其他 tab 页）
+    docked: { type: Boolean, value: false },
   },
 
   data: {

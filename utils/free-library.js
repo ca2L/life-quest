@@ -27,6 +27,10 @@ const SCENE_GENRES = {
   workout: ['electronic', 'dance', 'rock'],
   calm: ['piano', 'ambient', 'classical'],
   cook: ['jazz', 'lounge', 'soul'],
+  // 以下三组为新增曲库：乡村 / 主机游戏 BGM / 塞尔达风格管弦致敬
+  country: ['country', 'folk', 'americana'],
+  gaming: ['soundtrack', 'videogame', 'chiptune', 'electronic'],
+  zelda: ['orchestral', 'soundtrack', 'classical', 'epic'],
 }
 
 function hasKey() {

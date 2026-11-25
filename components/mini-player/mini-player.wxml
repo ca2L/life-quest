@@ -1,4 +1,4 @@
-<view wx:if="{{hasTrack && !hidden}}" class="mp-ball" bindtap="openPanel">
+<view wx:if="{{hasTrack && !hidden}}" class="mp-ball {{docked ? 'docked' : ''}}" bindtap="openPanel">
   <view class="mp-eq {{playing ? '' : 'paused'}}">
     <view class="mp-bar b1"></view>
     <view class="mp-bar b2"></view>

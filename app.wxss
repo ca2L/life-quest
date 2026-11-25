@@ -1,10 +1,54 @@
+/* ===== 设计系统 Token（8rpx 基准网格；真机 1rpx≈0.5px，即 4px 网格） ===== */
 page {
-    min-height: 100%;
-    background: #f5f7fa;
-    color: #1f2329;
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  /* 间距 */
+  --sp-1: 8rpx;
+  --sp-2: 16rpx;
+  --sp-3: 24rpx;
+  --sp-4: 32rpx;
+  --sp-5: 40rpx;
+  /* 圆角 */
+  --r-sm: 16rpx;
+  --r-md: 24rpx;
+  --r-lg: 32rpx;
+  /* 字阶 */
+  --fs-xs: 20rpx;
+  --fs-sm: 22rpx;
+  --fs-md: 26rpx;
+  --fs-lg: 32rpx;
+  --fs-xl: 40rpx;
+  /* 颜色：文字三级 / 品牌 / 表面 */
+  --ink-1: #17152b;
+  --ink-2: #4a4664;
+  --ink-3: #7d769b;
+  --brand: #6f5ce8;
+  --surface: #ffffff;
+  --canvas: #f6f6fa;
+  /* 阴影 */
+  --shadow-card: 0 6rpx 20rpx rgba(26, 22, 51, 0.05);
+  /* 层级：内容 < dock < sheet < dialog < overlay < toast
+     overlay 专供"独占式抽卡/确认"弹层，必须压住所有浮层与sheet */
+  --z-content: 1;
+  --z-dock: 40;
+  --z-float: 60;
+  --z-float-active: 110;
+  --z-sheet: 100;
+  --z-sheet-top: 105;
+  --z-dialog: 120;
+  --z-modal: 125;
+  --z-overlay: 130;
+  --z-toast: 140;
+
+  box-sizing: border-box;
+  min-height: 100%;
+  background: var(--canvas, #f6f6fa);
+  color: var(--ink-1, #1f2329);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+}
+
+view, text, scroll-view {
+  box-sizing: border-box;
 }
 
 button {
-    border-radius: 12rpx;
+  border-radius: 12rpx;
 }

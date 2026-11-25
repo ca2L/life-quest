@@ -97,6 +97,9 @@ function sceneTagMatch(track, scene) {
     workout: ['electronic', 'dance', 'rock'],
     calm: ['piano', 'ambient', 'classical', '免费曲库'],
     cook: ['jazz', 'lounge', 'soul'],
+    country: ['country', '乡村', 'folk', 'americana', 'acoustic'],
+    gaming: ['game', 'ost', 'chiptune', '游戏bgm', '电子'],
+    zelda: ['zelda', 'hyrule', 'orchestral', 'epic', '塞尔达'],
   }
   const keys = table[scene] || []
   return keys.some((k) => hay.indexOf(k) >= 0) ? 1 : 0

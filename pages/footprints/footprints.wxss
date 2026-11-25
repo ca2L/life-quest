@@ -160,7 +160,7 @@
 
 /* 弹层 */
 .modal-mask {
-  position: fixed; inset: 0; z-index: 100;
+  position: fixed; inset: 0; z-index: var(--z-sheet, 100);
   background: rgba(20, 16, 40, 0.55);
   display: flex; align-items: flex-end;
 }
@@ -393,7 +393,7 @@
 
 /* 选择弹层用 rpx 固定高度 + flex，不依赖 vh；z-index 高于表单弹层 */
 .bgm-mask {
-  position: fixed; inset: 0; z-index: 120;
+  position: fixed; inset: 0; z-index: var(--z-dialog, 120);
   background: rgba(20, 16, 40, 0.55);
   display: flex; align-items: flex-end;
 }

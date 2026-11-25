@@ -227,7 +227,12 @@ Page({
       let images = []
       try { images = f.images ? JSON.parse(f.images) : [] } catch (e) { images = [] }
       let people = []
-      try { people = f.people ? (Array.isArray(JSON.parse(f.people)) ? JSON.parse(f.people) : f.people.split(/[,，]/)) : [] } catch (e) { people = f.people ? String(f.people).split(/[,，]/) : [] }
+      try {
+        if (f.people) {
+          const parsed = JSON.parse(f.people)
+          people = Array.isArray(parsed) ? parsed : String(f.people).split(/[,，]/)
+        }
+      } catch (e) { people = f.people ? String(f.people).split(/[,，]/) : [] }
       const track = tracksById[String(trackMap[String(f.id)] || '')]
       return Object.assign({}, f, {
         moodIcon: mood.icon,

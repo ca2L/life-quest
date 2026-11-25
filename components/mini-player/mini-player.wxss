@@ -1,13 +1,30 @@
+/* 底部停靠条：作为界面骨架固定在 tabBar 上方，位置恒定、不随内容滚动漂移。
+   原来是大胶囊浮在内容上，滚动时必然遮挡卡片；改为 full-width dock 后，
+   用户把它理解为稳定的播放控件，而不是"挡住内容的意外浮层"。 */
 .mp-ball {
-  position: fixed; z-index: 80; right: 22rpx; bottom: 136rpx;
-  display: flex; align-items: center; max-width: 520rpx;
-  padding: 14rpx 16rpx 14rpx 18rpx; border-radius: 40rpx;
-  background: #ffffff; border: 2rpx solid #ece9fa;
-  box-shadow: 0 10rpx 30rpx rgba(40, 30, 90, 0.16);
+  position: fixed;
+  left: 28rpx;
+  right: 28rpx;
+  bottom: 118rpx;
+  z-index: var(--z-dock, 40);
+  display: flex;
+  height: 88rpx;
+  align-items: center;
+  padding: 0 16rpx 0 18rpx;
+  border-radius: 44rpx;
+  background: rgba(255, 255, 255, 0.97);
+  border: 2rpx solid #ece9fa;
+  box-shadow: 0 8rpx 28rpx rgba(40, 30, 90, 0.18);
 }
 .mp-eq {
-  display: flex; flex-shrink: 0; width: 40rpx; height: 40rpx; margin-right: 14rpx;
-  align-items: flex-end; justify-content: center; border-radius: 12rpx;
+  display: flex;
+  flex-shrink: 0;
+  width: 48rpx;
+  height: 48rpx;
+  margin-right: 14rpx;
+  align-items: flex-end;
+  justify-content: center;
+  border-radius: 14rpx;
   background: #f0edfd;
 }
 .mp-bar { width: 5rpx; margin: 0 2rpx; border-radius: 3rpx; background: #6f5ce8; animation: mpBounce 0.9s ease-in-out infinite alternate; }
@@ -18,13 +35,26 @@
 @keyframes mpBounce { from { transform: scaleY(0.6); } to { transform: scaleY(1.35); } }
 
 .mp-text { display: flex; flex: 1; min-width: 0; flex-direction: column; margin-right: 10rpx; }
-.mp-name { overflow: hidden; color: #17152b; font-size: 22rpx; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
-.mp-tag { margin-top: 3rpx; color: #a09ab8; font-size: 17rpx; }
+.mp-name { overflow: hidden; color: var(--ink-1, #17152b); font-size: 22rpx; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.mp-tag { margin-top: 3rpx; color: var(--ink-3, #7d769b); font-size: 17rpx; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mp-tag.bg { color: #5a49c4; }
 
 .mp-btn {
-  display: flex; flex-shrink: 0; width: 48rpx; height: 48rpx; margin-left: 8rpx;
+  display: flex; flex-shrink: 0; width: 52rpx; height: 52rpx; margin-left: 8rpx;
   align-items: center; justify-content: center; border-radius: 50%;
   background: #f0edfd; color: #6f5ce8; font-size: 24rpx; font-weight: 700;
 }
 .mp-btn.next { font-size: 32rpx; }
+
+/* docked 模式：不再 position:fixed 盖内容，而是作为 flex 子项占据底部一条。
+   父容器 .dock-slot 固定在 scroll-holder 之后，内容滚动区天然排除这一条。 */
+.mp-ball.docked {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: auto;
+  margin: 12rpx 0 16rpx;
+  flex-shrink: 0;
+  box-shadow: 0 -2rpx 16rpx rgba(40, 30, 90, 0.10);
+}

@@ -125,6 +125,7 @@ Page({
     // 随机漫步日历：点一次随机抽一条
     walkCount: 0,
     walkCard: null,
+    walkPulse: false,
   }),
 
   // 部分运行环境（如 H5 预览）没有 createSelectorQuery，必须检测后再用 canvas。
@@ -157,15 +158,34 @@ Page({
       }
       return
     }
-    this.setData({ walkCard: item })
+    this.setData({ walkCard: item, walkPulse: false })
   },
 
+  // 再来一条：旧卡先淡出再换文案，避免文字硬切；开关防止连点抖动
   againRandomWalk() {
-    this.drawRandomWalk()
+    if (this._walkSwitching) return
+    this._walkSwitching = true
+    this.setData({ walkPulse: false })
+    setTimeout(() => {
+      // 淡出期间用户可能已关闭弹窗，此时不再回填
+      if (!this.data.walkCard) {
+        this._walkSwitching = false
+        return
+      }
+      const item = randomWalk.pick()
+      if (item && item.text) {
+        this.setData({ walkCard: item, walkPulse: true })
+      }
+      setTimeout(() => {
+        this.setData({ walkPulse: false })
+        this._walkSwitching = false
+      }, 400)
+    }, 30)
   },
 
   closeWalkCard() {
-    this.setData({ walkCard: null })
+    this._walkSwitching = false
+    this.setData({ walkCard: null, walkPulse: false })
   },
 
   copyShortcutLink() {
@@ -507,26 +527,32 @@ Page({
   },
 
   async quickCheckIn(event) {
-    const id = event.currentTarget.dataset.id
-    const q = this.data.activeQuests.find((item) => item.id === id)
-    if (!q) return
-    const res = await checkInQuest(q)
-    if (res.error) {
-      wx.showToast({ title: res.error.message || '打卡失败', icon: 'none' })
-      return
+    if (this._checkingIn) return
+    this._checkingIn = true
+    try {
+      const id = event.currentTarget.dataset.id
+      const q = this.data.activeQuests.find((item) => item.id === id)
+      if (!q) return
+      const res = await checkInQuest(q)
+      if (res.error) {
+        wx.showToast({ title: res.error.message || '打卡失败', icon: 'none' })
+        return
+      }
+      if (res.justCompleted && res.claim && !res.claim.error) {
+        const c = res.claim
+        const tail = c.leveledUp ? ` 升级到 Lv.${c.newLevel}！` : ''
+        wx.showToast({
+          title: `${c.reward.label ? c.reward.label + ' +' : '+'} ${c.reward.xp} XP${tail}`,
+          icon: 'success',
+          duration: 2500,
+        })
+      } else {
+        wx.showToast({ title: '打卡成功', icon: 'success' })
+      }
+      await this.loadData()
+    } finally {
+      this._checkingIn = false
     }
-    if (res.justCompleted && res.claim && !res.claim.error) {
-      const c = res.claim
-      const tail = c.leveledUp ? ` 升级到 Lv.${c.newLevel}！` : ''
-      wx.showToast({
-        title: `${c.reward.label ? c.reward.label + ' +' : '+'} ${c.reward.xp} XP${tail}`,
-        icon: 'success',
-        duration: 2500,
-      })
-    } else {
-      wx.showToast({ title: '打卡成功', icon: 'success' })
-    }
-    await this.loadData()
   },
 
   goQuests() {
