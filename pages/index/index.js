@@ -12,6 +12,8 @@ const {
   SNAPSHOT, DESKTOP, MOBILE, LINKS, SCENES, buildState,
 } = require('../../utils/music')
 const musicLib = require('../../utils/music-library')
+// 数仓同步：上云成功的曲目把元数据写入 music_library，管理后台即可见
+const contentSync = require('../../utils/content-sync')
 // 全局音频单例：放在模块层，切页面/切 tab 都不会被回收，音乐继续播
 const player = require('../../utils/audio-player')
 const lifeModels = require('../../utils/life-models')
@@ -633,8 +635,19 @@ Page({
       return
     }
     this.setTracks(musicLib.setCloudInfo(id, r.cloudPath))
+    // 元数据同步进共享数仓（music_library），失败不影响播放，可由补同步追平
+    let syncFail = ''
+    const syncedTrack = musicLib.trackById(id)
+    if (syncedTrack && syncedTrack.cloudPath) {
+      const syncRes = await contentSync.syncTrack(syncedTrack)
+      if (!syncRes.ok) syncFail = '；数仓同步失败：' + (syncRes.error || '')
+    }
     if (typeof wx !== 'undefined' && typeof wx.showToast === 'function') {
-      wx.showToast({ title: '已上云 · 息屏也能继续播', icon: 'success', duration: 2200 })
+      wx.showToast({
+        title: syncFail ? '已上云' + syncFail : '已上云 · 息屏也能继续播',
+        icon: syncFail ? 'none' : 'success',
+        duration: syncFail ? 3000 : 2200,
+      })
     }
   },
 
@@ -647,7 +660,24 @@ Page({
   },
 
   loadMusicTracks() {
-    return this.setTracks(musicLib.loadTracks())
+    const list = this.setTracks(musicLib.loadTracks())
+    this.backfillLibraryOnce(list)
+    return list
+  },
+
+  // 每次会话补同步一次：把历史上云、但还没进数仓的曲目追平（如本次导入的 3 首）
+  backfillLibraryOnce(tracks) {
+    if (this._libraryBackfilled || !contentSync || !contentSync.syncAll) return
+    this._libraryBackfilled = true
+    contentSync.syncAll(tracks).then((r) => {
+      if (r.total > 0 && r.errors.length) {
+        console.warn('[content-sync] 数仓补同步部分失败：', r.errors)
+      }
+    }).catch((e) => {
+      console.warn('[content-sync] 数仓补同步异常：', e)
+      // 失败允许下次重试
+      this._libraryBackfilled = false
+    })
   },
 
   startTrack(index) {
