@@ -1,8 +1,8 @@
 <view class="login">
     <view class="login-badge">✦</view>
-    <text class="login-eyebrow">{{eyebrow}}</text>
-    <text class="login-title">{{title}}</text>
-    <text class="login-desc">{{desc}}</text>
+    <text class="login-eyebrow">START YOUR QUEST</text>
+    <text class="login-title">开启你的冒险</text>
+    <text class="login-desc">邮箱验证码登录 / 注册，无需密码</text>
 
     <view class="login-field">
         <text class="lf-icon">✉</text>

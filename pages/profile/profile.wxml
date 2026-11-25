@@ -5,7 +5,12 @@
   </view>
 
   <view wx:elif="{{authState === 'signed-out'}}" class="state-card login-wrap">
-    <login-panel eyebrow="LIFE · MAIN · QUEST" title="把一生，活成\n一场值得通关的冒险" desc="人生主线任务 · 记录你的进度、故事与足迹" bind:signedin="onSignedIn" />
+    <view class="login-hero">
+      <text class="login-eyebrow">LIFE · MAIN · QUEST</text>
+      <text class="login-title">把一生，活成\n一场值得通关的冒险</text>
+      <text class="login-desc">人生主线任务 · 记录你的进度、故事与足迹</text>
+    </view>
+    <login-panel bind:signedin="onSignedIn" />
   </view>
 
   <view wx:else class="content">
@@ -36,11 +41,15 @@
 
     <view class="section-head">
       <text class="section-title">成就徽章</text>
-      <text class="section-tip">点亮所有徽章，解锁完整成就</text>
+      <text class="section-tip">{{badges.unlockedCount}} / {{badges.total}} 已解锁</text>
     </view>
 
     <!-- 成就进度：作为「成就区」内部的从属条目，不再与顶部玩家卡平级并排 -->
     <view class="achievement-strip">
+      <view class="as-ring">
+        <text class="as-num">{{badges.unlockedCount}}</text>
+        <text class="as-denom">/{{badges.total}}</text>
+      </view>
       <view class="as-body">
         <view class="as-top">
           <text class="as-title">成就进度 {{badges.percent}}%</text>
@@ -64,17 +73,17 @@
             <text class="badge-symbol">{{item.unlocked ? item.icon : '?'}}</text>
           </view>
           <text class="badge-title">{{item.name}}</text>
+          <text class="badge-desc">{{item.desc}}</text>
           <view class="badge-mini-bar"><view class="badge-mini-fill {{item.unlocked ? 'got' : ''}}" style="width: {{item.progress}}%"></view></view>
           <text class="badge-progress">{{item.progress}}%</text>
         </view>
       </view>
     </view>
 
-    <view class="section-head tap-head" bindtap="toggleLadder">
+    <view class="section-head">
       <text class="section-title">等级阶梯</text>
-      <text class="section-tip">{{showLadder ? '收起 ↑' : '展开 ↓'}}</text>
     </view>
-    <view wx:if="{{showLadder}}" class="ladder">
+    <view class="ladder">
       <view class="ladder-item {{item.current ? 'current' : ''}}" wx:for="{{ladder}}" wx:key="level">
         <view class="ladge-dot"></view>
         <text class="ladder-level">Lv.{{item.level}}</text>
@@ -83,11 +92,10 @@
       </view>
     </view>
 
-    <view class="section-head tap-head" bindtap="toggleProfileForm">
+    <view class="section-head">
       <text class="section-title">冒险者档案</text>
-      <text class="section-tip">{{showProfileForm ? '收起 ↑' : '展开 ↓'}}</text>
     </view>
-    <view wx:if="{{showProfileForm}}" class="setting-card">
+    <view class="setting-card">
       <text class="field-label">昵称</text>
       <input class="field-input" placeholder="给自己起个称号" value="{{nickname}}" data-field="nickname" bindinput="onInput" />
 
@@ -129,5 +137,4 @@
     <text class="footer-note">数据保存在云端，换设备登录后可继续你的冒险</text>
   </view>
 </view>
-  <view class="player-spacer"></view>
   <mini-player />

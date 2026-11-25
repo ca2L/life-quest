@@ -49,10 +49,6 @@ view, text, scroll-view {
   box-sizing: border-box;
 }
 
-/* 非首页 tab 使用 fixed 播放条：内容末尾统一留安全区，
-   保证滚到底时最后一张卡片/徽章不会被压住。 */
-.player-spacer { height: 212rpx; }
-
 button {
   border-radius: 12rpx;
 }

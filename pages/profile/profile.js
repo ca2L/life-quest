@@ -32,13 +32,7 @@ Page({
     saveError: '',
     userEmail: '',
     booksReadCount: 0,
-    // 次级信息默认收起：首屏只保留“我是谁 / 我的进度 / 去哪儿”，降低注意力损耗
-    showLadder: false,
-    showProfileForm: false,
   },
-
-  toggleLadder() { this.setData({ showLadder: !this.data.showLadder }) },
-  toggleProfileForm() { this.setData({ showProfileForm: !this.data.showProfileForm }) },
 
   onLoad() {
     const d = new Date()

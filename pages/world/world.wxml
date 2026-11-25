@@ -5,7 +5,12 @@
   </view>
 
   <view wx:elif="{{authState === 'signed-out'}}" class="state-card login-wrap">
-    <login-panel eyebrow="OPEN WORLD · 开放世界" title="点亮你的\n人生地图" desc="每段足迹，都会在真实地图上点亮一个地点。" bind:signedin="onSignedIn" />
+    <view class="login-hero">
+      <text class="login-eyebrow">OPEN WORLD · 开放世界</text>
+      <text class="login-title">点亮你的\n人生地图</text>
+      <text class="login-desc">每段足迹，都会在真实地图上点亮一个地点。</text>
+    </view>
+    <login-panel bind:signedin="onSignedIn" />
   </view>
 
   <view wx:else class="content">
@@ -55,15 +60,15 @@
       <!-- 旅程分享卡：足迹旅记式发光深色卡（沿用品牌紫） -->
       <view class="travel-board">
         <view class="tb-head">
-          <text class="tb-eyebrow">TRAVEL LOG · {{activeYear === '全部' ? '全部年份' : activeYear}}</text>
+          <text class="tb-eyebrow">MY TRAVEL MAP · 我的旅程</text>
           <view class="tb-badges">
             <text class="tb-mile">🧭 {{board.distanceKm}} km</text>
             <text class="tb-year">截至 {{board.asOf}}</text>
           </view>
         </view>
         <view class="tb-hero">
-          <text class="tb-line1">旅行足迹</text>
-          <text class="tb-big">足迹地图</text>
+          <text class="tb-line1">{{activeYear === '全部' ? '我的' : activeYear + ' 年'}}旅行足迹</text>
+          <text class="tb-big">我点亮了 {{board.map.litCount}} 地点</text>
         </view>
         <!-- 三格统计：省 / 城 / 旅行（分享卡同构） -->
         <view class="tb-share-stats">
@@ -86,7 +91,7 @@
         <view wx:if="{{board.provinceCount}}" class="pb-section">
           <view class="pb-head">
             <view class="pb-title-wrap">
-              <text class="pb-title">点亮省份</text>
+              <text class="pb-title">足迹遍布 · 点亮省份</text>
               <text class="pb-total">已点亮 {{board.provinceCount}}/34 个省级行政区</text>
             </view>
             <view class="pb-view-switch three">
@@ -100,7 +105,7 @@
           <view wx:if="{{provinceView === 'real'}}" class="cm-wrap">
             <canvas wx:if="{{canvasAvailable}}" type="2d" id="china-map" class="cm-canvas"></canvas>
             <image wx:else class="cm-image" src="{{chinaMapSrc}}" mode="widthFix" binderror="onChinaMapError" />
-            <text class="cm-note">省界数据：阿里云 DataV · 正式发布请使用带审图号标准地图</text>
+            <text class="cm-note">省界数据：阿里云 DataV 行政区划边界 · 南海诸岛按规范插图 · 仅供个人足迹可视化，正式发布需使用带审图号的标准地图</text>
           </view>
 
           <!-- 格子省份图（兜底样式） -->
@@ -441,5 +446,4 @@
     </view>
   </view>
 </view>
-  <view class="player-spacer"></view>
   <mini-player />
