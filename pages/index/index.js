@@ -122,9 +122,12 @@ Page({
     recommendNote: '',
     recommendLoading: false,
     recommendPlayingName: '',
-    // 随机漫步日历：点一次随机抽一条
+    // 随机漫步日历：点一次随机抽一条；今日一句按日期固定（flomo 式每日回顾）
     walkCount: 0,
     walkCard: null,
+    walkDailyMode: true, // true 打开=今日一句；点「再来一条」后转随机
+    // 继续阅读：微信读书式从上次进度接着读（只读已有 readerProgress，不新增采集）
+    continueReading: null,
   }),
 
   // 部分运行环境（如 H5 预览）没有 createSelectorQuery，必须检测后再用 canvas。
@@ -138,6 +141,7 @@ Page({
     this.restoreMusicState()
     this.loadDailyPicks()
     this.setData({ walkCount: randomWalk.count() })
+    this.loadContinueReading()
     // 订阅全局播放器：页面只负责把状态画出来，真正的播放在模块单例里
     this._playerUnsub = player.subscribe((s) => this.applyPlayerState(s))
     this.loadMusicTracks()
@@ -148,25 +152,54 @@ Page({
     this.syncFreeLibrary()
   },
 
-  // 随机漫步日历：每次点击抽一条，来自飞书多维表格导出的条目数据
+  // 继续阅读：从 readerProgress 里找出读得最多的那份指南，展示可读到的张数。
+  // 完全只读已有数据，不写入、不改变任何现有信息。
+  loadContinueReading() {
+    try {
+      if (typeof wx === 'undefined' || typeof wx.getStorageSync !== 'function') return
+      const progress = wx.getStorageSync('readerProgress') || {}
+      const guides = this.data.guides || []
+      let best = null
+      guides.forEach((g) => {
+        const idx = Number(progress[g.id])
+        if (!isNaN(idx) && idx >= 0 && (!best || idx > best.idx)) {
+          best = { guide: g, idx: idx }
+        }
+      })
+      if (!best) return
+      const total = best.guide.cardCount || 0
+      const percent = total ? Math.min(100, Math.round(((best.idx + 1) / total) * 100)) : 0
+      this.setData({
+        continueReading: {
+          guide: best.guide.id,
+          title: best.guide.title,
+          icon: best.guide.icon,
+          no: best.idx + 1,
+          total: total,
+          percent: percent,
+        },
+      })
+    } catch (e) { /* 读取失败不影响书架 */ }
+  },
+
+  // 随机漫步日历：打开先给「今日一句」（按日期固定，flomo 式每日回顾），
+  // 点「再来一条」才随机抽。两者都不叠加动画，避免双闪。
   drawRandomWalk() {
-    const item = randomWalk.pick()
+    const item = randomWalk.daily(this.data.todayStr) || randomWalk.pick()
     if (!item || !item.text) {
       if (typeof wx !== 'undefined' && typeof wx.showToast === 'function') {
         wx.showToast({ title: '条目还没导入，请先导入飞书表格导出文件', icon: 'none', duration: 2600 })
       }
       return
     }
-    // 直接换卡：入场动画只在弹层首次创建时播一次，切卡不再叠加动画，
-    // 避免旧版 rwCardIn 与 rwCardPulse 抢同一 animation 属性导致双闪。
-    this.setData({ walkCard: item })
+    this.setData({ walkCard: item, walkDailyMode: true })
   },
 
-  // 再来一条：只替换文案，不做任何 class 切换（防连点抖动由 randomWalk.pick 内部去重保证）
+  // 再来一条：转为随机，只替换文案，不做任何 class 切换
   againRandomWalk() {
     const item = randomWalk.pick()
     if (item && item.text) {
-      this.setData({ walkCard: item })
+      this.setData({ walkCard: item, walkDailyMode: false })
     }
   },
 

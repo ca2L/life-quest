@@ -102,9 +102,9 @@
       <view class="sc-card" bindtap="drawRandomWalk">
         <view class="sc-icon">🎲</view>
         <view class="sc-body">
-          <text class="sc-eyebrow">RANDOM WALK · 随机漫步</text>
-          <text class="sc-title">抽一条属于今天的话</text>
-          <text class="sc-sub">已收录 {{walkCount}} 条 · 点击随机抽</text>
+          <text class="sc-eyebrow">DAILY REVIEW · 每日回顾</text>
+          <text class="sc-title">收下属于今天的一句话</text>
+          <text class="sc-sub">今日固定 · 可换 · 已收录 {{walkCount}} 条</text>
         </view>
         <text class="sc-arrow">→</text>
       </view>
@@ -320,6 +320,18 @@
       <text class="section-badge">{{guides.length}} 份 · {{totalCards}} 张卡</text>
     </view>
     <text class="guide-intro">三份开源指南按真实章节、菜谱与课程全部拆成卡片，点进去像翻书一样读，还能全书搜索；完整正文见原仓库。</text>
+
+    <!-- 继续阅读：微信读书式，从上次读到的位置接着读（只读已有进度） -->
+    <view wx:if="{{continueReading}}" class="continue-card" data-guide="{{continueReading.guide}}" data-no="{{continueReading.no}}" bindtap="openReader">
+      <view class="cc-icon">{{continueReading.icon}}</view>
+      <view class="cc-body">
+        <text class="cc-eyebrow">CONTINUE READING · 继续阅读</text>
+        <text class="cc-title">{{continueReading.title}}</text>
+        <view class="cc-bar"><view class="cc-bar-fill" style="width: {{continueReading.percent}}%"></view></view>
+        <text class="cc-progress">读到第 {{continueReading.no}} / {{continueReading.total}} 张 · {{continueReading.percent}}%</text>
+      </view>
+      <text class="cc-arrow">→</text>
+    </view>
 
     <!-- 自己的书：已读数据入口（参考微信读书 + 开源阅读记录项目） -->
     <view class="hbe-entry" bindtap="goBooks">
@@ -623,7 +635,7 @@
               <view class="ms-ip-cancel" catchtap="toggleImportPanel">取消</view>
             </view>
           </view>
-          <text class="ms-note">列表顶部 12 首为内置精选：氛围曲 5 首 + 乡村曲库 2 首 + 主机游戏 BGM 3 首 + 塞尔达风格致敬 2 首（均为 SoundHelix 公开演示音源，非任何游戏官方原声；官方音乐请到 Nintendo Music 等正规渠道；想听真实乡村 / 游戏 CC 曲目可配置 Jamendo client_id 或导入自己有权使用的音源）。无需上传即可播放；真机需把 www.soundhelix.com 加入 downloadFile 合法域名，开发者工具勾选「不校验合法域名」即可试听）。下面的本地音频 / MV 从聊天会话选取（可先发给自己），也能从相册选一段视频。选中即自动保存到本机，不用再点保存，之后可以随时「改名」，或点「☁ 上云」存一份到云端以解锁息屏后台播放；离开这一页、切到任务/世界/足迹，音乐都会继续播，回来还在原处。MV 收起面板会缩成右下角浮窗，点「⤢ 悬浮小窗」或切页面会进入微信系统小窗，跨页面继续播（需基础库 2.11.0+）。视频格式建议 mp4 / mov。「其他 App」是粘贴对方分享的歌单链接 / 音源文本；导出的是可复制清单，给洛雪音乐等支持导入的 App 用。请只导入自己有权使用的文件，小程序读不到其他 App 的曲库，也不破解任何版权保护。</text>
+          <text class="ms-note">列表顶部 17 首为内置精选：氛围曲 5 首 + 乡村曲库 2 首 + 主机游戏 BGM 3 首 + 塞尔达风格致敬 2 首 + 各类主机 BGM 5 首（均为 SoundHelix 公开演示音源，非任何游戏官方原声；官方音乐请到 Nintendo Music 等正规渠道；想听真实乡村 / 游戏 CC 曲目可配置 Jamendo client_id 或导入自己有权使用的音源）。无需上传即可播放；真机需把 www.soundhelix.com 加入 downloadFile 合法域名，开发者工具勾选「不校验合法域名」即可试听）。下面的本地音频 / MV 从聊天会话选取（可先发给自己），也能从相册选一段视频。选中即自动保存到本机，不用再点保存，之后可以随时「改名」，或点「☁ 上云」存一份到云端以解锁息屏后台播放；离开这一页、切到任务/世界/足迹，音乐都会继续播，回来还在原处。MV 收起面板会缩成右下角浮窗，点「⤢ 悬浮小窗」或切页面会进入微信系统小窗，跨页面继续播（需基础库 2.11.0+）。视频格式建议 mp4 / mov。「其他 App」是粘贴对方分享的歌单链接 / 音源文本；导出的是可复制清单，给洛雪音乐等支持导入的 App 用。请只导入自己有权使用的文件，小程序读不到其他 App 的曲库，也不破解任何版权保护。</text>
           <view wx:if="{{musicTracks.length}}" class="ms-tracks">
             <view class="ms-track {{currentTrackIndex === ti && (trackPlaying || videoPlaying) ? 'playing' : ''}} {{item.missing ? 'broken' : ''}}"
               wx:for="{{musicTracks}}" wx:for-index="ti" wx:key="id"
@@ -727,7 +739,7 @@
     <view wx:if="{{walkCard}}" class="rw-mask" catchtap="closeWalkCard" catchtouchmove="noop">
       <view class="rw-card" catchtap="noop">
         <view class="rw-top">
-          <text class="rw-eyebrow">RANDOM WALK · 随机漫步</text>
+          <text class="rw-eyebrow">{{walkDailyMode ? 'DAILY REVIEW · 今日回顾' : 'RANDOM WALK · 随机一条'}}</text>
           <view class="rw-refresh" catchtap="againRandomWalk">↻</view>
         </view>
         <text class="rw-quote">“</text>

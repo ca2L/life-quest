@@ -757,6 +757,26 @@
 }
 .gc-foot-cancel { margin-left: 16rpx; padding: 22rpx 34rpx; border-radius: 18rpx; background: #f2f0f8; color: #6b6585; font-size: 26rpx; text-align: center; }
 
+/* 继续阅读：微信读书式，从上次进度接着读（只读已有数据） */
+.continue-card {
+  display: flex; align-items: center; gap: 20rpx;
+  margin: 0 0 24rpx; padding: 24rpx;
+  border-radius: 22rpx; background: #ffffff;
+  box-shadow: 0 8rpx 28rpx rgba(23, 21, 43, 0.07);
+}
+.cc-icon {
+  width: 88rpx; height: 88rpx; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 18rpx; background: #f0edff; font-size: 44rpx;
+}
+.cc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cc-eyebrow { color: #7f789d; font-size: 18rpx; font-weight: 700; letter-spacing: 2rpx; }
+.cc-title { color: #17152b; font-size: 28rpx; font-weight: 700; margin-top: 4rpx; }
+.cc-bar { height: 8rpx; border-radius: 4rpx; background: #eceaf5; margin-top: 12rpx; overflow: hidden; }
+.cc-bar-fill { height: 100%; border-radius: 4rpx; background: #6f5ce8; }
+.cc-progress { color: #7d769b; font-size: 20rpx; margin-top: 8rpx; }
+.cc-arrow { color: #6f5ce8; font-size: 36rpx; flex-shrink: 0; }
+
 /* 人生书架 → 我的书架（真实已读数据入口） */
 .hbe-entry {
   display: flex; align-items: center; gap: 18rpx;
