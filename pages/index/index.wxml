@@ -50,6 +50,8 @@
       </view>
     </view>
 
+    <!-- swiper 外面包一层绝对定位容器：微信 swiper 不响应 flex:1，必须用 inset 强制撑满 -->
+    <view class="swiper-wrap">
     <swiper class="main-swiper" current="{{activeTab}}" bindchange="onTabSwiperChange" duration="240">
       <swiper-item>
         <scroll-view scroll-y class="tab-scroll" enhanced show-scrollbar="{{false}}">
@@ -442,6 +444,7 @@
       </scroll-view>
       </swiper-item>
     </swiper>
+    </view>
 
     <!-- 卡片阅读器：固定 rpx 高度，避免真机 vh 重算漂移（备用入口） -->
     <view wx:if="{{guideSheetOpen}}" class="gs-mask" bindtap="closeGuide">
