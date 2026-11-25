@@ -17,6 +17,19 @@ const contentSync = require('../../utils/content-sync')
 // 免费曲库（Jamendo CC）+ 每日推荐引擎 + 播放历史
 const freeLibrary = require('../../utils/free-library')
 const dailyRecommend = require('../../utils/daily-recommend')
+
+// 每日快捷指令：张潇雨随机漫步日历（iOS 快捷指令，小程序只能复制链接唤起）
+const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/970bdef001e046f2a4ea697846331d17'
+const SHORTCUT_LINES = [
+  { icon: '🚶', label: '漫无目的走一步' },
+  { icon: '🎲', label: '让运气替你选' },
+  { icon: '🌅', label: '新的一天，新的路' },
+  { icon: '🧭', label: '方向感可以晚点来' },
+  { icon: '🍂', label: '绕点路也没关系' },
+  { icon: '☕', label: '慢慢来，比较快' },
+  { icon: '🌙', label: '夜晚也是漫步的一部分' },
+  { icon: '📍', label: '随便停，都是站' },
+]
 // 全局音频单例：放在模块层，切页面/切 tab 都不会被回收，音乐继续播
 const player = require('../../utils/audio-player')
 const lifeModels = require('../../utils/life-models')
@@ -118,6 +131,10 @@ Page({
     recommendNote: '',
     recommendLoading: false,
     recommendPlayingName: '',
+    // swiper 精确高度（JS 量出，微信 swiper 不响应 flex/百分比）
+    swiperH: 0,
+    // 每日快捷指令卡片的当日文案（同一天固定）
+    shortcutDaily: { icon: '🎲', label: '让运气替你选' },
   }),
 
   // 部分运行环境（如 H5 预览）没有 createSelectorQuery，必须检测后再用 canvas。
@@ -130,6 +147,7 @@ Page({
   onLoad() {
     this.restoreMusicState()
     this.loadDailyPicks()
+    this.loadShortcutDaily()
     // 订阅全局播放器：页面只负责把状态画出来，真正的播放在模块单例里
     this._playerUnsub = player.subscribe((s) => this.applyPlayerState(s))
     this.loadMusicTracks()
@@ -138,6 +156,39 @@ Page({
     // 每日推荐：先出本地结果，免费曲库同步完再刷新一次
     this.loadDailyRecommend()
     this.syncFreeLibrary()
+  },
+
+  loadShortcutDaily() {
+    const d = new Date()
+    const seed = d.getFullYear() * 372 + d.getMonth() * 31 + d.getDate()
+    this.setData({ shortcutDaily: SHORTCUT_LINES[seed % SHORTCUT_LINES.length] })
+  },
+
+  copyShortcutLink() {
+    if (typeof wx === 'undefined' || typeof wx.setClipboardData !== 'function') return
+    wx.setClipboardData({
+      data: SHORTCUT_URL,
+      success: () => {
+        if (typeof wx.showToast === 'function') {
+          wx.showToast({ title: '链接已复制，去 Safari 打开添加', icon: 'none', duration: 2600 })
+        }
+      },
+    })
+  },
+
+  // JS 量高：微信 swiper 不响应 flex/百分比，CSS 兑底不可靠时用内联 px 高度压住
+  measureSwiper() {
+    try {
+      if (typeof wx === 'undefined' || typeof wx.createSelectorQuery !== 'function') return
+      const info = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : null
+      if (!info || !info.windowHeight) return
+      wx.createSelectorQuery().select('.tab-bar').boundingClientRect((rect) => {
+        if (!rect || !rect.bottom) return
+        const padBottom = 130 * info.windowWidth / 750
+        const h = Math.floor(info.windowHeight - rect.bottom - padBottom)
+        if (h > 120 && h !== this.data.swiperH) this.setData({ swiperH: h })
+      }).exec()
+    } catch (e) { /* 量不出就靠 CSS 兑底 */ }
   },
 
   // 注意：这里刻意不销毁音频。音频实例属于全局单例，
@@ -182,6 +233,10 @@ Page({
 
   onShow() {
     this.restore()
+    // swiper 高度：登录态/提醒条渲染完后量一次，再延迟量一次兑异步内容
+    this.measureSwiper()
+    setTimeout(() => this.measureSwiper(), 600)
+    setTimeout(() => this.measureSwiper(), 1500)
     try {
       this.setData({ booksReadCount: bookshelf.statsOf(bookshelf.loadBooks(), todayStr(), bookshelf.getGoal()).readCount })
     } catch (e) { /* 书架数据不可用时不影响首页 */ }
@@ -340,6 +395,8 @@ Page({
       entropyReminder: entropy.reminder,
     }, () => {
       if (grid) this.scheduleDraw()
+      // 提醒条/错误条出现在 tab 栏上方，会改变 tab 栏底部位置，重量一次
+      this.measureSwiper()
     })
   },
 

@@ -52,7 +52,7 @@
 
     <!-- swiper 外面包一层绝对定位容器：微信 swiper 不响应 flex:1，必须用 inset 强制撑满 -->
     <view class="swiper-wrap">
-    <swiper class="main-swiper" current="{{activeTab}}" bindchange="onTabSwiperChange" duration="240">
+    <swiper class="main-swiper" style="{{swiperH ? 'height:' + swiperH + 'px' : ''}}" current="{{activeTab}}" bindchange="onTabSwiperChange" duration="240">
       <swiper-item>
         <scroll-view scroll-y class="tab-scroll" enhanced show-scrollbar="{{false}}">
 
@@ -96,6 +96,17 @@
         <text class="we-sub">人生年报 · 原声带 · 资产负债表 · 存档迁移</text>
       </view>
       <text class="we-arrow">→</text>
+    </view>
+
+    <!-- 每日快捷指令：随机漫步日历（iOS 快捷指令，复制链接到 Safari 添加） -->
+    <view class="sc-card" bindtap="copyShortcutLink">
+      <view class="sc-icon">{{shortcutDaily.icon}}</view>
+      <view class="sc-body">
+        <text class="sc-eyebrow">DAILY SHORTCUT · 每日一签</text>
+        <text class="sc-title">随机漫步日历 · {{shortcutDaily.label}}</text>
+        <text class="sc-sub">今天抽这条 → 点卡片复制链接，去 Safari 打开添加快捷指令</text>
+      </view>
+      <text class="sc-arrow">⧉</text>
     </view>
 
     <view class="section-head">
