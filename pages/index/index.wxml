@@ -26,33 +26,33 @@
       </view>
     </view>
 
-    <!-- ===== 人生 BGM · 顶部音乐模块 ===== -->
-    <view class="music-card {{musicPlaying ? 'playing' : ''}}" bindtap="openMusic">
-      <view class="mc-glow"></view>
-      <view class="mc-main">
-        <view class="mc-vinyl {{musicPlaying ? '' : 'paused'}}">
-          <view class="mc-vinyl-label">{{musicSceneIcon}}</view>
-        </view>
-        <view class="mc-text">
-          <text class="mc-eyebrow">LIFE SOUNDTRACK · 人生 BGM</text>
-          <text class="mc-title">{{musicSceneIcon}} {{musicSceneName}}音轨</text>
-          <text class="mc-track">{{musicSceneTrack}} · {{musicSceneGenre}}</text>
-        </view>
-        <view class="mc-play {{musicPlaying || trackPlaying ? 'active' : ''}}" catchtap="toggleFromCard">
-          <text class="mc-play-icon">{{trackPlaying || musicPlaying ? '‖' : '▶'}}</text>
-        </view>
+    <view wx:if="{{loadError}}" class="error-bar" bindtap="handleRetry">
+      <text>{{loadError}}（点击重试）</text>
+    </view>
+
+    <!-- 关系熵提醒：一条、克制、可永久关闭，不评价、不催促 -->
+    <view wx:if="{{entropyReminder}}" class="entropy-bar">
+      <text class="eb-icon">♡</text>
+      <text class="eb-text">{{entropyReminder.hint}}</text>
+      <text class="eb-close" data-id="{{entropyReminder.id}}" catchtap="dismissEntropy">不再提示</text>
+    </view>
+
+    <!-- 顶部 tab：主线 / 书架 / 音乐（微信读书式左右滑切换） -->
+    <view class="tab-bar">
+      <view class="tab-item {{activeTab === 0 ? 'active' : ''}}" data-tab="0" bindtap="onTabTap">
+        <text class="tab-label">主线</text>
       </view>
-      <view class="mc-foot">
-        <view class="mc-eq {{musicPlaying ? '' : 'paused'}}">
-          <view class="mc-eq-bar b1"></view>
-          <view class="mc-eq-bar b2"></view>
-          <view class="mc-eq-bar b3"></view>
-          <view class="mc-eq-bar b4"></view>
-        </view>
-        <text class="mc-foot-text">{{trackPlaying ? '♪ 正在播放 · ' + currentTrackName : (musicPlaying ? '氛围播放中 · 洛雪音乐助手' : '点按开启氛围 · 洛雪音乐助手')}}</text>
-        <text class="mc-foot-cta">{{trackPlaying ? '继续播放' : '切换场景'}} →</text>
+      <view class="tab-item {{activeTab === 1 ? 'active' : ''}}" data-tab="1" bindtap="onTabTap">
+        <text class="tab-label">书架</text>
+      </view>
+      <view class="tab-item {{activeTab === 2 ? 'active' : ''}}" data-tab="2" bindtap="onTabTap">
+        <text class="tab-label">音乐</text>
       </view>
     </view>
+
+    <swiper class="main-swiper" current="{{activeTab}}" bindchange="onTabSwiperChange" duration="240">
+      <swiper-item>
+        <scroll-view scroll-y class="tab-scroll" enhanced show-scrollbar="{{false}}">
 
     <!-- 玩家卡：左右紧凑版，把称号、XP、进度条收进一行，避免顶部过高 -->
     <view class="player-card">
@@ -74,17 +74,6 @@
           <text class="pb-pct">{{player.progressPercent}}%</text>
         </view>
       </view>
-    </view>
-
-    <view wx:if="{{loadError}}" class="error-bar" bindtap="handleRetry">
-      <text>{{loadError}}（点击重试）</text>
-    </view>
-
-    <!-- 关系熵提醒：一条、克制、可永久关闭，不评价、不催促 -->
-    <view wx:if="{{entropyReminder}}" class="entropy-bar">
-      <text class="eb-icon">♡</text>
-      <text class="eb-text">{{entropyReminder.hint}}</text>
-      <text class="eb-close" data-id="{{entropyReminder.id}}" catchtap="dismissEntropy">不再提示</text>
     </view>
 
     <view class="dashboard">
@@ -300,6 +289,12 @@
       <text class="fpe-arrow">→</text>
     </view>
 
+      </scroll-view>
+      </swiper-item>
+
+      <swiper-item>
+        <scroll-view scroll-y class="tab-scroll" enhanced show-scrollbar="{{false}}">
+
     <!-- ===== 人生书架 · 全量卡片 ===== -->
     <view class="section-head">
       <view class="section-title-wrap">
@@ -373,6 +368,80 @@
         </view>
       </view>
     </view>
+
+      </scroll-view>
+      </swiper-item>
+
+      <swiper-item>
+        <scroll-view scroll-y class="tab-scroll" enhanced show-scrollbar="{{false}}">
+
+        <!-- ===== 人生 BGM ===== -->
+        <view class="music-card {{musicPlaying ? 'playing' : ''}}" bindtap="openMusic">
+          <view class="mc-glow"></view>
+          <view class="mc-main">
+            <view class="mc-vinyl {{musicPlaying ? '' : 'paused'}}">
+              <view class="mc-vinyl-label">{{musicSceneIcon}}</view>
+            </view>
+            <view class="mc-text">
+              <text class="mc-eyebrow">LIFE SOUNDTRACK · 人生 BGM</text>
+              <text class="mc-title">{{musicSceneIcon}} {{musicSceneName}}音轨</text>
+              <text class="mc-track">{{musicSceneTrack}} · {{musicSceneGenre}}</text>
+            </view>
+            <view class="mc-play {{musicPlaying || trackPlaying ? 'active' : ''}}" catchtap="toggleFromCard">
+              <text class="mc-play-icon">{{trackPlaying || musicPlaying ? '‖' : '▶'}}</text>
+            </view>
+          </view>
+          <view class="mc-foot">
+            <view class="mc-eq {{musicPlaying ? '' : 'paused'}}">
+              <view class="mc-eq-bar b1"></view>
+              <view class="mc-eq-bar b2"></view>
+              <view class="mc-eq-bar b3"></view>
+              <view class="mc-eq-bar b4"></view>
+            </view>
+            <text class="mc-foot-text">{{trackPlaying ? '♪ 正在播放 · ' + currentTrackName : (musicPlaying ? '氛围播放中 · 洛雪音乐助手' : '点按开启氛围 · 洛雪音乐助手')}}</text>
+            <text class="mc-foot-cta">{{trackPlaying ? '继续播放' : '切换场景'}} →</text>
+          </view>
+        </view>
+
+        <!-- ===== 每日推荐：按播放历史 + 当前场景挑 5 首 ===== -->
+        <view class="section-head">
+          <view class="section-title-wrap">
+            <text class="section-eyebrow">DAILY RECOMMEND</text>
+            <text class="section-title">每日推荐</text>
+          </view>
+          <text class="section-link" catchtap="refreshRecommend">换一批 ↻</text>
+        </view>
+        <text class="guide-intro" wx:if="{{recommendNote}}">{{recommendNote}}</text>
+        <view wx:if="{{recommendLoading}}" class="ms-empty">正在根据你的播放记录挑选…</view>
+        <view wx:elif="{{recommendItems.length}}" class="rec-list">
+          <view class="rec-item {{recommendPlayingName === item.track.name && trackPlaying ? 'playing' : ''}}"
+            wx:for="{{recommendItems}}" wx:for-index="ri" wx:key="ri"
+            data-idx="{{ri}}" catchtap="playRecommend">
+            <view class="rec-num">{{ri + 1}}</view>
+            <view class="rec-body">
+              <text class="rec-name">{{item.track.name}}</text>
+              <text class="rec-meta">{{item.track.artist ? item.track.artist + ' · ' : ''}}{{item.track.category}}<block wx:if="{{item.reason}}"> · {{item.reason}}</block></text>
+            </view>
+            <text class="rec-save" catchtap="saveRecommend" data-idx="{{ri}}">＋收</text>
+            <view class="rec-play">{{recommendPlayingName === item.track.name && trackPlaying ? '‖' : '▶'}}</view>
+          </view>
+        </view>
+        <view wx:else class="ms-empty">曲库还是空的：先在「我的音源」导入，或在 utils/free-library.js 填入 Jamendo client_id 接通免费曲库。</view>
+
+        <!-- 场景快捷切换 -->
+        <text class="ms-label">场景音轨</text>
+        <view class="scene-chip-row">
+          <view class="scene-chip {{item.key === musicSceneKey ? 'active' : ''}}"
+            wx:for="{{musicScenes}}" wx:key="key"
+            data-key="{{item.key}}" catchtap="setMusicScene">
+            <text>{{item.icon}} {{item.name}}</text>
+          </view>
+        </view>
+        <view class="open-sheet-btn" bindtap="openMusic">打开完整音乐面板（导入音源 / 后台播放设置）→</view>
+
+      </scroll-view>
+      </swiper-item>
+    </swiper>
 
     <!-- 卡片阅读器：固定 rpx 高度，避免真机 vh 重算漂移（备用入口） -->
     <view wx:if="{{guideSheetOpen}}" class="gs-mask" bindtap="closeGuide">

@@ -14,6 +14,9 @@ const {
 const musicLib = require('../../utils/music-library')
 // 数仓同步：上云成功的曲目把元数据写入 music_library，管理后台即可见
 const contentSync = require('../../utils/content-sync')
+// 免费曲库（Jamendo CC）+ 每日推荐引擎 + 播放历史
+const freeLibrary = require('../../utils/free-library')
+const dailyRecommend = require('../../utils/daily-recommend')
 // 全局音频单例：放在模块层，切页面/切 tab 都不会被回收，音乐继续播
 const player = require('../../utils/audio-player')
 const lifeModels = require('../../utils/life-models')
@@ -103,6 +106,18 @@ Page({
     renameText: '',
     todayKey: '',
     todayPicks: [],
+    // 首页 tab（微信读书式左右滑切换）
+    activeTab: 0,
+    tabs: [
+      { key: 'main', label: '主线' },
+      { key: 'books', label: '书架' },
+      { key: 'music', label: '音乐' },
+    ],
+    // 每日推荐
+    recommendItems: [],
+    recommendNote: '',
+    recommendLoading: false,
+    recommendPlayingName: '',
   }),
 
   // 部分运行环境（如 H5 预览）没有 createSelectorQuery，必须检测后再用 canvas。
@@ -120,6 +135,9 @@ Page({
     this.loadMusicTracks()
     player.restoreLast()
     this.applyPlayerState(player.getState())
+    // 每日推荐：先出本地结果，免费曲库同步完再刷新一次
+    this.loadDailyRecommend()
+    this.syncFreeLibrary()
   },
 
   // 注意：这里刻意不销毁音频。音频实例属于全局单例，
@@ -678,6 +696,120 @@ Page({
       // 失败允许下次重试
       this._libraryBackfilled = false
     })
+  },
+
+  // ── 免费曲库每日同步（Jamendo CC，未配置 key 时静默跳过）──
+  syncFreeLibrary() {
+    if (this._freeLibSynced) return
+    this._freeLibSynced = true
+    freeLibrary.syncDaily().then((r) => {
+      if (!r.skipped && r.ok && r.saved > 0) {
+        // 新曲目入库后刷新推荐池
+        this.loadDailyRecommend()
+      }
+    }).catch((e) => {
+      console.warn('[free-library] 每日同步异常：', e)
+      this._freeLibSynced = false
+    })
+  },
+
+  // ── 每日推荐 ──
+  loadDailyRecommend(nonce) {
+    this.setData({ recommendLoading: true })
+    const run = nonce ? dailyRecommend.recommendShuffle : dailyRecommend.recommend
+    run({ scene: this.data.musicSceneKey || '' }, nonce).then((res) => {
+      if (!nonce && this._recNonce) return // 已被「换一批」的更新覆盖
+      const items = (res.items || []).map((it) => ({
+        track: it.track,
+        reason: it.reason,
+      }))
+      let note = res.reason || ''
+      if (!note) {
+        if (freeLibrary.hasKey()) note = '按你的播放历史与当前场景挑选 · 每天不同'
+        else note = '按播放历史从本机与云端曲库挑选（接入免费曲库：在 utils/free-library.js 填入 Jamendo client_id）'
+      }
+      this.setData({ recommendItems: items, recommendNote: note, recommendLoading: false })
+    }).catch((e) => {
+      this.setData({ recommendItems: [], recommendNote: '推荐暂不可用：' + ((e && e.message) || ''), recommendLoading: false })
+    })
+  },
+
+  refreshRecommend() {
+    this._recNonce = (this._recNonce || 0) + 1
+    this.loadDailyRecommend(this._recNonce)
+  },
+
+  // 把推荐项转成全局播放器可播的 track 形态
+  playableFromRecommend(item) {
+    const t = item.track || {}
+    if (t.source_url || t.url) {
+      return {
+        id: t.id || 'rec' + Date.now(), name: t.name || t.title || '推荐曲目',
+        source: 'external', kind: 'audio', path: '', url: t.source_url || t.url,
+        category: t.category || '', scene: this.data.musicSceneKey || '', size: 0,
+      }
+    }
+    if (t.cloudPath || t.cloud_path) {
+      return {
+        id: t.id || 'rec' + Date.now(), name: t.name || t.title || '推荐曲目',
+        source: 'local', kind: 'audio', path: '', url: '',
+        cloudPath: t.cloudPath || t.cloud_path, category: t.category || '',
+        scene: this.data.musicSceneKey || '', size: 0,
+      }
+    }
+    return null
+  },
+
+  playRecommend(event) {
+    const idx = Number(event.currentTarget.dataset.idx)
+    const item = this.data.recommendItems[idx]
+    if (!item) return
+    const track = this.playableFromRecommend(item)
+    if (!track) {
+      if (typeof wx !== 'undefined' && typeof wx.showToast === 'function') {
+        wx.showToast({ title: '这首没有可播放的音源链接', icon: 'none' })
+      }
+      return
+    }
+    player.setList([track])
+    player.playIndex(0)
+    this.setData({ recommendPlayingName: track.name })
+  },
+
+  // 把推荐曲目收进「我的音源」（仅支持有直链的免费曲库/外链曲目）
+  saveRecommend(event) {
+    const idx = Number(event.currentTarget.dataset.idx)
+    const item = this.data.recommendItems[idx]
+    if (!item) return
+    const t = item.track || {}
+    const url = t.source_url || t.url || ''
+    if (!url) {
+      if (typeof wx !== 'undefined' && typeof wx.showToast === 'function') {
+        wx.showToast({ title: '本地曲目无需收藏', icon: 'none' })
+      }
+      return
+    }
+    const r = musicLib.addExternalTracks(item.track.name + ' | ' + url)
+    this.setTracks(r.list)
+    if (typeof wx !== 'undefined' && typeof wx.showToast === 'function') {
+      wx.showToast({ title: '已收进我的音源', icon: 'success' })
+    }
+  },
+
+  // ── 首页 tab + swiper 左右滑切换 ──
+  onTabTap(event) {
+    const tab = Number(event.currentTarget.dataset.tab)
+    if (tab === this.data.activeTab) return
+    this.setData({ activeTab: tab })
+  },
+
+  onTabSwiperChange(event) {
+    const src = event.detail.source
+    // 只有手势滑动才同步状态； setData 驱动的切换（点 tab）不回写，避免抖动
+    if (src === 'touch' || src === '') {
+      const tab = event.detail.current
+      if (tab !== this.data.activeTab) this.setData({ activeTab: tab })
+    }
   },
 
   startTrack(index) {

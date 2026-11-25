@@ -16,6 +16,7 @@
  */
 
 const musicLib = require('./music-library')
+const playHistory = require('./play-history')
 
 const STATE_KEY = 'lifeMusicState'
 
@@ -360,6 +361,8 @@ function playIndex(index) {
   state.cloudBacked = useCloud
   cloudUrlExpiresAt = 0
   writeStore({ lastTrackId: track.id })
+  // 播放历史埋点：记录的是「发起播放」，失败重试同一首 60 秒内不重复计数
+  playHistory.record(track, track.scene || '')
 
   if (!useCloud) {
     // 原有路径保持完全同步，无 cloudPath 时不加载云 SDK
