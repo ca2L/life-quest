@@ -1,0 +1,361 @@
+<view class="page">
+  <view wx:if="{{authState === 'checking'}}" class="state-card">
+    <view class="spinner"></view>
+    <text class="state-title">正在翻开你的回忆录…</text>
+  </view>
+
+  <view wx:elif="{{authState === 'signed-out'}}" class="state-card login-wrap">
+    <view class="login-hero">
+      <text class="login-eyebrow">LIFE FOOTPRINTS</text>
+      <text class="login-title">人生足迹</text>
+      <text class="login-desc">登录后，记录你走过的每一段路。</text>
+    </view>
+    <login-panel bind:signedin="onSignedIn" />
+  </view>
+
+  <view wx:else class="content">
+    <view class="hero">
+      <view class="hero-lines">
+        <text class="hero-eyebrow">YOUR MEMOIR · 你的回忆录</text>
+        <text class="hero-title">人生足迹</text>
+        <text class="hero-sub">{{totalCount}} 段足迹 · 跨越 {{yearsCount}} 个年头</text>
+      </view>
+      <view class="hero-add" bindtap="openForm">
+        <text class="add-plus">＋</text>
+        <text class="add-label">记一笔</text>
+      </view>
+    </view>
+
+    <!-- BGM 入口：统计来自真实绑定映射，点「去关联」可给已有足迹换歌 -->
+    <view class="bgm-entry" bindtap="openForm">
+      <text class="be-icon">♫</text>
+      <view class="be-body">
+        <text class="be-title">{{bgmBoundCount}} / {{allFeet.length}} 段足迹已关联 BGM</text>
+        <text class="be-sub">记录或编辑足迹时选择音源库曲目；也可在足迹详情里直接换歌</text>
+      </view>
+      <text class="be-arrow">›</text>
+    </view>
+
+    <view wx:if="{{loadError}}" class="error-bar" bindtap="handleRetry">
+      <text>{{loadError}}（点击重试）</text>
+    </view>
+
+    <!-- 分类筛选：吃喝玩乐等 -->
+    <scroll-view wx:if="{{categoryCounts.length > 1}}" scroll-x class="cat-filter">
+      <view class="cat-chip {{categoryFilter === 'all' ? 'active' : ''}}" data-cat="all" bindtap="setCategoryFilter">全部</view>
+      <view class="cat-chip {{categoryFilter === item.key ? 'active' : ''}}"
+        wx:for="{{categoryCounts}}" wx:key="key" data-cat="{{item.key}}" bindtap="setCategoryFilter">
+        {{item.icon}} {{item.label}} {{item.count}}
+      </view>
+    </scroll-view>
+
+    <scroll-view wx:if="{{yearOptions.length > 1}}" scroll-x class="year-filter">
+      <view class="year-chip {{filterYear === item ? 'active' : ''}}"
+        wx:for="{{yearOptions}}" wx:key="item" data-year="{{item}}" bindtap="setFilter">
+        {{item === 'all' ? '全部年份' : item}}
+      </view>
+    </scroll-view>
+
+    <view wx:if="{{totalCount}}" class="timeline">
+      <view class="year-group" wx:for="{{groups}}" wx:for-item="group" wx:key="year"
+        wx:if="{{filterYear === 'all' || filterYear === group.year}}">
+        <view class="year-marker">
+          <text class="year-num">{{group.year}}</text>
+          <text class="year-count">{{group.count}} 段</text>
+        </view>
+
+        <view class="tl-item" wx:for="{{group.items}}" wx:for-item="fp" wx:key="id">
+          <view class="tl-axis">
+            <view class="tl-dot"></view>
+            <view class="tl-line"></view>
+          </view>
+          <view class="fp-card" data-id="{{fp.id}}" bindtap="openDetail">
+            <view class="fp-head">
+              <text class="fp-date">{{fp.dateText}}</text>
+              <text class="fp-mood">{{fp.moodIcon}} {{fp.moodLabel}}</text>
+            </view>
+            <view class="fp-title-row">
+              <text class="fp-cat cat-{{fp.categoryKey}}">{{fp.categoryIcon}} {{fp.categoryLabel}}</text>
+              <text class="fp-title">{{fp.title}}</text>
+            </view>
+
+            <view wx:if="{{fp.location_name}}" class="fp-location" data-lat="{{fp.latitude}}" data-lng="{{fp.longitude}}" data-name="{{fp.location_name}}" catchtap="openMap">
+              <text class="loc-icon">📍</text>
+              <text class="loc-name">{{fp.location_name}}</text>
+              <text wx:if="{{fp.hasLocation}}" class="loc-arrow">›</text>
+            </view>
+
+            <text wx:if="{{fp.scene}}" class="fp-scene">{{fp.scene}}</text>
+
+            <view wx:if="{{fp.peopleList.length}}" class="fp-people">
+              <text class="people-label">同行</text>
+              <text class="people-tag" wx:for="{{fp.peopleList}}" wx:for-item="p" wx:key="p">{{p}}</text>
+            </view>
+
+            <view wx:if="{{fp.bgmName}}" class="fp-bgm" data-id="{{fp.bgmId}}" catchtap="playFootprintBgm">
+              <text class="fb-icon">♫</text>
+              <text class="fb-name">{{fp.bgmName}}</text>
+              <text wx:if="{{fp.bgmMissing}}" class="fb-missing">文件失效</text>
+              <text class="fb-play">▶ 播放</text>
+            </view>
+
+            <view wx:if="{{fp.images.length}}" class="fp-thumbs">
+              <image wx:for="{{fp.images}}" wx:for-item="img" wx:key="img" class="fp-thumb"
+                src="{{img}}" mode="aspectFill" data-src="{{img}}" catchtap="previewDetailImage" />
+            </view>
+
+            <view wx:if="{{fp.questName}}" class="fp-quest">
+              <text class="quest-tag">⚔ {{fp.chapter || '主线'}} · {{fp.questName}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="timeline-end">— 足迹仍在继续 —</view>
+    </view>
+
+    <view wx:else class="empty-state" bindtap="openForm">
+      <text class="empty-icon">🗺️</text>
+      <text class="empty-title">还没有足迹</text>
+      <text class="empty-desc">记录第一段故事：一次旅行、一个重要的人、\n一个难忘的下午——都可以是足迹。</text>
+      <text class="empty-cta">＋ 写下第一段足迹</text>
+    </view>
+  </view>
+
+  <!-- 详情弹层 -->
+  <view wx:if="{{showDetail && detail}}" class="modal-mask" bindtap="closeDetail">
+    <view class="detail-sheet" style="{{detailStyle}}" catchtap="noop">
+      <view class="sheet-handle"></view>
+      <view class="detail-head">
+        <text class="detail-date">{{detail.dateText}}</text>
+        <view class="detail-actions">
+          <text class="detail-edit" data-id="{{detail.id}}" catchtap="editFootprint">编辑</text>
+          <text class="detail-del" catchtap="deleteFootprint">删除</text>
+        </view>
+      </view>
+      <text class="detail-title">{{detail.title}}</text>
+      <view class="detail-section">
+        <text class="fp-cat cat-{{detail.categoryKey}}">{{detail.categoryIcon}} {{detail.categoryLabel}}</text>
+      </view>
+      <view class="detail-section" wx:if="{{detail.location_name}}">
+        <view class="detail-loc" data-lat="{{detail.latitude}}" data-lng="{{detail.longitude}}" data-name="{{detail.location_name}}" catchtap="openMap">
+          <text>📍 {{detail.location_name}}</text>
+          <text wx:if="{{detail.hasLocation}}" class="loc-arrow">在地图查看 ›</text>
+        </view>
+      </view>
+      <view class="detail-section" wx:if="{{detail.scene}}">
+        <text class="detail-label">场景</text>
+        <text class="detail-text">{{detail.scene}}</text>
+      </view>
+      <view class="detail-section" wx:if="{{detail.peopleList.length}}">
+        <text class="detail-label">同行的人</text>
+        <view class="fp-people">
+          <text class="people-tag" wx:for="{{detail.peopleList}}" wx:for-item="p" wx:key="p">{{p}}</text>
+        </view>
+      </view>
+      <view class="detail-section" wx:if="{{detailImages.length}}">
+        <text class="detail-label">照片</text>
+        <view class="detail-images">
+          <image wx:for="{{detailImages}}" wx:for-item="img" wx:key="img" class="detail-image"
+            src="{{img}}" mode="widthFix" data-src="{{img}}" catchtap="previewDetailImage" />
+        </view>
+      </view>
+      <view class="detail-section">
+        <text class="detail-label">这段足迹的 BGM</text>
+        <view wx:if="{{detail.bgmName}}" class="detail-bgm">
+          <text class="db-name" data-id="{{detail.bgmId}}" catchtap="playFootprintBgm">♫ {{detail.bgmName}} ▶</text>
+          <text wx:if="{{detail.bgmMissing}}" class="db-missing">本地文件已失效</text>
+        </view>
+        <view class="detail-bgm-empty" catchtap="openBgmPickerFromDetail">
+          {{detail.bgmName ? '更换 / 取消关联' : '＋ 关联一首 BGM'}}
+        </view>
+      </view>
+      <view class="detail-section" wx:if="{{detail.questName}}">
+        <text class="detail-label">关联任务</text>
+        <text class="detail-text">⚔ {{detail.questName}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 表单弹层 -->
+  <view wx:if="{{showForm}}" class="modal-mask" bindtap="closeForm">
+    <view class="form-sheet" style="{{sheetStyle}}" catchtap="noop">
+      <view class="sheet-handle"></view>
+      <view class="form-head">
+        <text class="form-title">{{editingId ? '编辑足迹' : '记录足迹'}}</text>
+        <text class="form-close" bindtap="closeForm">✕</text>
+      </view>
+
+      <scroll-view scroll-y class="form-body">
+        <view class="field">
+          <text class="field-label">标题 <text class="required">*</text></text>
+          <input class="field-input" placeholder="例：第一次去海边看日出"
+            value="{{form.title}}" data-field="title" bindinput="onFieldInput" />
+        </view>
+
+        <view class="field">
+          <text class="field-label">发生时间 <text class="required">*</text></text>
+          <input class="field-input" placeholder="YYYY-MM-DD，如 2026-11-24"
+            value="{{form.occurred_at}}" bindinput="onDateInput" />
+          <view class="date-row">
+            <picker mode="date" value="{{form.occurred_at}}" bindchange="onDatePick">
+              <view class="date-picker">📅 从日历选择</view>
+            </picker>
+            <text class="date-hint">可直接输入，也可点日历选</text>
+          </view>
+        </view>
+
+        <view class="field">
+          <text class="field-label">地点</text>
+          <input class="field-input" placeholder="例：广州·十三行 / 家里"
+            value="{{form.locationName}}" data-field="locationName" bindinput="onFieldInput" />
+          <view class="loc-actions">
+            <block wx:if="{{mapAvailable}}">
+              <view class="loc-btn primary" bindtap="pickLocation">📍 国内选点</view>
+              <view class="loc-btn" bindtap="useMyLocation">⊙ 当前位置</view>
+            </block>
+            <view class="loc-btn globe" bindtap="openGlobePicker">🌍 全球选点 · 境外</view>
+            <view wx:if="{{!mapAvailable}}" class="loc-tip">当前预览环境无微信地图选点，可用「全球选点」或直接输入地点</view>
+            <view wx:if="{{form.latitude}}" class="loc-btn ghost" bindtap="clearLocation">清除坐标</view>
+          </view>
+          <view class="common-places">
+            <text class="common-label">常用</text>
+            <text class="common-chip {{form.locationName === item ? 'active' : ''}}"
+              wx:for="{{commonPlaces}}" wx:key="item" data-name="{{item}}" bindtap="pickCommonPlace">{{item}}</text>
+          </view>
+          <text wx:if="{{form.address}}" class="loc-address">{{form.address}}</text>
+        </view>
+
+        <view class="field">
+          <text class="field-label">场景描述</text>
+          <textarea class="field-textarea" placeholder="当时的天气、发生了什么、你的感受…"
+            value="{{form.scene}}" data-field="scene" bindinput="onFieldInput" maxlength="500" auto-height />
+        </view>
+
+        <view class="field">
+          <text class="field-label">同行人物 <text class="field-hint-inline">从角色卡勾选，羁绊会一起成长</text></text>
+          <view wx:if="{{companionOptions.length}}" class="companion-picker">
+            <view class="companion-opt {{form.companionIds.indexOf(item.id) >= 0 ? 'picked' : ''}}"
+              wx:for="{{companionOptions}}" wx:key="id" data-id="{{item.id}}" bindtap="toggleCompanion">
+              <view class="co-avatar" style="background: {{item.color}}">{{item.avatar}}</view>
+              <text class="co-name">{{item.name}}</text>
+              <text class="co-check">{{form.companionIds.indexOf(item.id) >= 0 ? '✓' : '+'}}</text>
+            </view>
+          </view>
+          <view wx:if="{{companionSummary.length}}" class="companion-chosen">
+            <text wx:for="{{companionSummary}}" wx:key="id" class="chosen-tag" style="border-color: {{item.color}}">{{item.avatar}} {{item.name}}</text>
+          </view>
+          <input class="field-input people-manual" placeholder="也可手动输入，多个名字用逗号分隔"
+            value="{{form.people}}" bindinput="onPeopleInput" />
+        </view>
+
+        <view class="field">
+          <text class="field-label">这段足迹的 BGM <text class="field-hint-inline">从音源库选，随时可改可清除</text></text>
+          <view class="bgm-field" bindtap="openBgmPicker">
+            <text class="bf-icon">♫</text>
+            <text class="bf-name {{bgmSelectedName ? '' : 'placeholder'}}">{{bgmSelectedName || '选一首歌，给这段回忆配乐'}}</text>
+            <text class="bf-arrow">›</text>
+          </view>
+          <view class="bgm-field-actions">
+            <text class="bf-action" catchtap="useCurrentBgm">使用当前播放{{bgmNowPlayingName ? ' · ' + bgmNowPlayingName : ''}}</text>
+            <text wx:if="{{bgmSelectedName}}" class="bf-action ghost" catchtap="clearBgm">清除关联</text>
+          </view>
+        </view>
+
+        <view class="field">
+          <text class="field-label">足迹分类</text>
+          <view class="mood-row">
+            <view class="mood-opt {{form.category === item.key ? 'active' : ''}}"
+              wx:for="{{categories}}" wx:key="key" data-key="{{item.key}}" bindtap="onCategorySelect">
+              <text class="mood-icon">{{item.icon}}</text>
+              <text class="mood-label">{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="field">
+          <text class="field-label">心情</text>
+          <view class="mood-row">
+            <view class="mood-opt {{form.mood === item.key ? 'active' : ''}}"
+              wx:for="{{moods}}" wx:key="key" data-key="{{item.key}}" bindtap="onMoodSelect">
+              <text class="mood-icon">{{item.icon}}</text>
+              <text class="mood-label">{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="field">
+          <text class="field-label">照片（最多 6 张）</text>
+          <view class="img-grid">
+            <view class="img-cell" wx:for="{{form.images}}" wx:key="img">
+              <image src="{{item}}" mode="aspectFill" class="img-preview" data-src="{{item}}" catchtap="previewFormImage" />
+              <text class="img-remove" data-index="{{index}}" catchtap="removeImage">✕</text>
+            </view>
+            <view wx:if="{{mediaAvailable && form.images.length < 6}}" class="img-add" bindtap="pickImages">＋</view>
+          </view>
+          <view wx:if="{{form.images.length < 6}}" class="img-url-row">
+            <input class="img-url-input" placeholder="或粘贴图片链接 https://…"
+              value="{{imageUrlInput}}" bindinput="onImageUrlInput" />
+            <view class="img-url-add" bindtap="addImageUrl">添加</view>
+          </view>
+          <text wx:if="{{!mediaAvailable}}" class="img-tip">真机可直接拍照/选相册；预览环境请粘贴图片链接</text>
+        </view>
+
+        <view class="field" wx:if="{{quests.length}}">
+          <text class="field-label">关联主线任务</text>
+          <picker mode="selector" range="{{quests}}" range-key="title" data-field="quest_id" bindchange="onQuestPick">
+            <view class="date-picker">{{formQuestTitle}}</view>
+          </picker>
+        </view>
+
+        <view wx:if="{{formError}}" class="form-error">{{formError}}</view>
+        <view class="form-pad"></view>
+      </scroll-view>
+
+      <view class="form-footer">
+        <view class="btn-cancel" bindtap="closeForm">取消</view>
+        <view class="btn-save {{saving ? 'disabled' : ''}}" bindtap="saveFootprint">
+          {{saving ? '保存中…' : (editingId ? '保存修改' : '记录足迹')}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- BGM 选择弹层：固定 rpx 高度 + flex，不用 vh；层级高于表单，避免被裁切 -->
+  <view wx:if="{{bgmSheetOpen}}" class="bgm-mask" bindtap="closeBgmPicker">
+    <view class="bgm-sheet" style="{{bgmStyle}}" catchtap="noop">
+      <view class="sheet-handle"></view>
+      <view class="bgm-head">
+        <view class="bgm-head-text">
+          <text class="bgm-title">{{bgmEditFootprintId ? '给这段足迹换 BGM' : '这段足迹的 BGM'}}</text>
+          <text class="bgm-sub">音源库 · 只列出音频（MV 不是背景音乐）</text>
+        </view>
+        <text class="bgm-close" catchtap="closeBgmPicker">✕</text>
+      </view>
+      <scroll-view scroll-y class="bgm-list">
+        <view wx:if="{{!bgmOptions.length}}" class="bgm-empty">
+          <text class="bem-icon">🎵</text>
+          <text class="bem-title">音源库还是空的</text>
+          <text class="bem-desc">先去首页「人生 BGM」导入本地音频或粘贴音源链接，回来就能给足迹配乐。</text>
+          <view class="bem-btn" catchtap="goImportMusic">去导入音源 →</view>
+        </view>
+        <view wx:for="{{bgmOptions}}" wx:key="id" class="bgm-opt {{item.picked ? 'picked' : ''}}">
+          <view class="bo-main" data-id="{{item.id}}" catchtap="selectBgm">
+            <text class="bo-icon">♫</text>
+            <view class="bo-text">
+              <text class="bo-name">{{item.name}}</text>
+              <text class="bo-meta">{{item.metaText}}</text>
+            </view>
+            <text wx:if="{{item.playing}}" class="bo-playing">播放中</text>
+            <text class="bo-check">{{item.picked ? '✓' : ''}}</text>
+          </view>
+          <text class="bo-preview" data-id="{{item.id}}" catchtap="previewBgm">▶ 试听</text>
+        </view>
+      </scroll-view>
+      <view class="bgm-foot">
+        <view class="bgm-foot-btn" catchtap="useCurrentBgm">使用当前播放</view>
+        <view class="bgm-foot-btn ghost" catchtap="clearBgm">不关联 BGM</view>
+      </view>
+    </view>
+  </view>
+</view>
+  <mini-player />

@@ -1,0 +1,13 @@
+<view wx:if="{{hasTrack && !hidden}}" class="mp-ball" bindtap="openPanel">
+  <view class="mp-eq {{playing ? '' : 'paused'}}">
+    <view class="mp-bar b1"></view>
+    <view class="mp-bar b2"></view>
+    <view class="mp-bar b3"></view>
+  </view>
+  <view class="mp-text">
+    <text class="mp-name">{{name || '我的音源'}}</text>
+    <text class="mp-tag {{backgroundCapable ? 'bg' : ''}}">{{backgroundCapable ? '后台可播 · 锁屏可控' : '仅前台可播'}}</text>
+  </view>
+  <text class="mp-btn" catchtap="toggle">{{playing ? '‖' : '▶'}}</text>
+  <text class="mp-btn next" catchtap="next">›</text>
+</view>

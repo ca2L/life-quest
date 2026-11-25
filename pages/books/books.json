@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "我的书架",
+  "navigationBarBackgroundColor": "#1a1633",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#f4f5fb",
+  "backgroundTextStyle": "dark",
+  "usingComponents": {
+    "mini-player": "/components/mini-player/mini-player"
+  }
+}

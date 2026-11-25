@@ -1,0 +1,80 @@
+人生主线任务 · 原生微信小程序 —— 迁移说明
+打包时间：2026-11-25 18:46
+源码目录：life-quest/
+包内文件：99 个源码/资源文件 + 本说明，共 1 份 ZIP、1 份 TAR.GZ
+
+────────────────────────────────────
+一、快速开始
+1. 解压到任意目录，得到 life-quest/ 文件夹（包内已带这一层目录，不会散落）。
+   Windows：双击 ZIP；Linux/macOS：tar -xzf life-quest-20261125.tar.gz
+2. 微信开发者工具 → 导入项目 → 项目目录选 life-quest/。
+3. AppID 默认是 touristappid（游客模式，可预览界面，但云登录/云能力受限）。
+   要用完整云能力，请换成你自己的小程序 AppID。
+4. 不要执行 npm install，也不要删 node_modules/：
+   包内已带 @tencent-ai/workbuddy-cloud-sdk 的 dev 版本
+   (^0.1.4-dev.71e5d1e.202611161655)，公共 npm 源不一定能重新装到同一版本，
+   删掉会直接编译失败。
+5. 编译预览即可；真机/上传前，在小程序后台把
+   https://mp-api.app.workbuddy.host 加入 request 合法域名
+   （调试时可临时勾选「不校验合法域名」）。
+
+────────────────────────────────────
+二、云端配置（换主机不用改，换「应用」才要改）
+相关文件：
+  utils/cloud.js        endpoint / publishableKey / workBuddyOAuthClientId
+  utils/cloud-music.js  PUBLISHABLE_KEY（与上面同一个 publishableKey）
+
+这三项是当前 WorkBuddy 应用的「公开配置」，publishableKey 是可下发的公钥。
+包里不含 AppSecret、私钥、账号密码、个人邮箱或手机号，可安全拷贝到自有主机。
+只要继续用同一个 WorkBuddy 应用，换任何主机都不用改动。
+若换成自己的小程序 / 云应用，请在云控制台生成后替换上述两处。
+
+云端数据表（utils/store.js 内 createTableAccess 的 table 字段）：
+  player_profile / quests / checkins / footprints / characters
+必须开启 RLS，策略为 owner_id = auth.uid()（写法参考 database/characters.sql）。
+未建表时前端会自动降级为本地 storage：不报错，但数据不再跨设备同步。
+
+────────────────────────────────────
+三、重要：你的个人数据不在这个包里
+包里只有代码与静态资源，没有任何个人记录。数据分三处：
+
+1) 云端数据库（档案、任务、打卡、足迹、角色卡）
+   新主机用同一个微信账号登录同一个应用，会自动拉回，无需导出。
+
+2) 微信本地 storage（不会随代码迁移，必须手动导出再导入）
+   主要键：
+   lifeMusicTracks              音源库（导入过的 MP3/MV 记录）
+   footprintTracks              足迹 × BGM 绑定
+   footprintCountries           足迹国家映射
+   lq_characters_v1             角色卡本地副本
+   lifeBookshelf@1              我的书架 / 已读数据
+   lifeBookshelfGoal            年度阅读目标
+   readerProgress / readerBookmarks / readerFont   阅读进度、书签、字号
+   lifeMusicState / lifeMusicSignedUrls / lifeEntropyDismissed  播放与提醒状态
+   导出：App 内「我的 → 人生作品 → 人生存档」导出 JSON（开放 schema
+         life-quest/archive@1）；「我的 → 我的书架」导出 JSON / CSV。
+   导入：书架页支持 中文表头 CSV / Goodreads CSV / JSON / 竖线文本 回导。
+   人生存档 JSON 目前只提供导出与自包含年册 HTML，逐条回导请先人工核对。
+
+3) 音源文件本体
+   MP3 / MV 存在微信沙盒 wxfile:// 与小程序 USER_DATA_PATH，既不在项目目录、
+   也不在包里。换主机后：
+   - 已点过「上云」的曲目：登录同一账号即可重新签名播放；
+   - 仅本地的曲目：需重新用「导入音源」选一次文件，或重新上云。
+
+────────────────────────────────────
+四、合规与已知边界
+- 中国省界 SVG 来自阿里云 DataV GeoAtlas，境内地图未自绘国界；
+  境外地点数据内置在 utils/world-places.js，未接任何境外瓦片、
+  Google / OSM / Mapbox 服务。
+- 定位与地图选点已在 app.json 声明 requiredPrivateInfos；
+  后台音频已声明 requiredBackgroundModes: ["audio"]。
+- 未真机验证项：wx.request 二进制上传、BackgroundAudioManager 播放带
+  token 的签名 URL、签名 1 小时过期后续播、MV PiP 跨 switchTab、
+  canvas 长图尺寸、shareFileMessage 兼容、正式版后台音频审核。
+
+────────────────────────────────────
+五、校验
+ZIP  : python -c "import zipfile;print(zipfile.ZipFile('life-quest-20261125.zip').testzip())"  → None
+TAR  : tar -tzf life-quest-20261125.tar.gz | wc -l
+两个包内容一致，仅容器格式不同；按目标主机系统任选其一即可。

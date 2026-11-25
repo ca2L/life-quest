@@ -1,0 +1,66 @@
+<view class="page">
+  <view class="gp-head">
+    <view class="gp-head-top">
+      <text class="gp-title">🌍 全球选点</text>
+      <text class="gp-chip-count">{{groups.length}} 个大洲 · 境外可点</text>
+    </view>
+    <text class="gp-sub">在地图上点一下取坐标，或从下方城市速查表里选一个。境外地点不依赖微信地图选点。</text>
+  </view>
+
+  <view wx:if="{{mapAvailable}}" class="gp-map-wrap">
+    <map id="globeMap" class="gp-map"
+      latitude="{{center.latitude}}" longitude="{{center.longitude}}" scale="{{scale}}"
+      markers="{{markers}}" bindtap="onMapTap" enable-zoom enable-scroll show-location="{{false}}"></map>
+    <view class="gp-map-tip">点地图任意位置即可取坐标</view>
+  </view>
+  <view wx:else class="gp-map-fallback">
+    <text>当前预览环境无原生地图，直接用下方城市速查表选点即可</text>
+  </view>
+
+  <view class="gp-coord">
+    <view class="gp-coord-text">
+      <text class="gp-coord-label">当前坐标</text>
+      <text class="gp-coord-value">{{latText}}, {{lngText}}</text>
+      <text wx:if="{{country}}" class="gp-coord-country">{{country}}</text>
+    </view>
+    <view class="gp-center-btn" bindtap="useCenter">以地图中心为准</view>
+  </view>
+
+  <view class="gp-search">
+    <input class="gp-search-input" placeholder="搜索城市 / 国家，如 东京、法国"
+      value="{{keyword}}" bindinput="onSearch" />
+  </view>
+
+  <scroll-view scroll-y class="gp-list">
+    <view wx:for="{{groups}}" wx:for-item="group" wx:key="name" class="gp-group">
+      <text class="gp-group-name">{{group.icon}} {{group.name}} <text class="gp-group-count">{{group.places.length}}</text></text>
+      <view class="gp-chips">
+        <view class="gp-city {{placeName === item.name ? 'picked' : ''}}"
+          wx:for="{{group.places}}" wx:for-item="item" wx:key="name"
+          data-name="{{item.name}}" bindtap="pickCity">
+          <text class="gp-city-name">{{item.name}}</text>
+          <text class="gp-city-country">{{item.country}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{!groups.length}}" class="gp-empty">没有匹配的城市，可直接在地图上点一下取坐标</view>
+    <view class="gp-note">底图由腾讯地图提供 · 境外地点以坐标记录，不自绘国界、不接入境外地图源</view>
+  </scroll-view>
+
+  <view class="gp-form">
+    <view class="gp-form-row">
+      <text class="gp-form-label">地点名称</text>
+      <input class="gp-name-input" placeholder="例：浅草寺 / 巴黎铁塔"
+        value="{{placeName}}" bindinput="onNameInput" />
+    </view>
+    <view class="gp-form-row">
+      <text class="gp-form-label">所属国家</text>
+      <input class="gp-name-input" placeholder="例：日本 / 泰国（可手动改）"
+        value="{{countryInput}}" bindinput="onCountryInput" />
+    </view>
+    <view class="gp-foot">
+      <view class="gp-confirm" bindtap="confirm">使用这个地点</view>
+      <view class="gp-cancel" bindtap="cancel">取消</view>
+    </view>
+  </view>
+</view>

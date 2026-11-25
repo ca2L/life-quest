@@ -1,0 +1,178 @@
+<view class="page">
+  <view wx:if="{{authState === 'checking'}}" class="state-card">
+    <view class="spinner"></view>
+    <text class="state-title">正在加载任务…</text>
+  </view>
+
+  <view wx:elif="{{authState === 'signed-out'}}" class="state-card login-wrap">
+    <view class="login-hero">
+      <text class="login-eyebrow">LIFE · MAIN · QUEST</text>
+      <text class="login-title">把一生，活成\n一场值得通关的冒险</text>
+      <text class="login-desc">人生主线任务 · 记录你的进度、故事与足迹</text>
+    </view>
+    <login-panel bind:signedin="onSignedIn" />
+  </view>
+
+  <view wx:else class="content">
+    <view class="head">
+      <view>
+        <text class="head-eyebrow">QUEST BOARD</text>
+        <text class="head-title">任务看板</text>
+        <text class="head-sub">完成主线，解锁人生章节</text>
+      </view>
+      <view class="head-actions">
+        <view class="tpl-btn" bindtap="openTemplates">模板</view>
+        <view class="add-btn" bindtap="openCreate">+ 新建</view>
+      </view>
+    </view>
+
+    <!-- 数据仪表：小黑盒统计页风格（完成度环 + 数据网格） -->
+    <view class="dashboard">
+      <view class="dash-ring">
+        <view class="dash-ring-fill" style="{{dashRingStyle}}"></view>
+        <view class="dash-ring-core">
+          <text class="dash-ring-num">{{donePercent}}<text class="dash-ring-pct">%</text></text>
+          <text class="dash-ring-label">总完成度</text>
+        </view>
+      </view>
+      <view class="dash-grid">
+        <view class="dash-item"><text class="dash-num">{{activeCount}}</text><text class="dash-label">进行中</text></view>
+        <view class="dash-item"><text class="dash-num">{{doneCount}}</text><text class="dash-label">已完成</text></view>
+        <view class="dash-item"><text class="dash-num">{{streak}}</text><text class="dash-label">连击天数</text></view>
+        <view class="dash-item"><text class="dash-num">{{totalXp}}</text><text class="dash-label">总经验</text></view>
+      </view>
+    </view>
+
+    <view class="section-head">
+      <text class="section-title">章节进度</text>
+      <text class="section-tip">Lv.{{level}} 冒险中</text>
+    </view>
+    <scroll-view class="chapter-scroll" scroll-x>
+      <view class="chapter-row">
+        <view class="chapter-chip {{item.total === 0 ? 'idle' : ''}} {{item.percent === 100 ? 'cleared' : ''}}" wx:for="{{chapterStats}}" wx:key="key">
+          <view class="chapter-top">
+            <text class="chapter-idx">{{item.icon}}</text>
+            <text wx:if="{{item.percent === 100}}" class="chapter-clear">已通关</text>
+          </view>
+          <text class="chapter-name">{{item.name}}</text>
+          <text class="chapter-count">{{item.done}}/{{item.total || 0}} · {{item.percent}}%</text>
+          <view class="chapter-bar"><view class="chapter-fill {{item.percent === 100 ? 'gold' : ''}}" style="width: {{item.percent}}%"></view></view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="filter-bar">
+      <view class="filter-item {{filter === 'all' ? 'active' : ''}}" data-filter="all" bindtap="setFilter">全部</view>
+      <view class="filter-item {{filter === 'main' ? 'active' : ''}}" data-filter="main" bindtap="setFilter">主线</view>
+      <view class="filter-item {{filter === 'side' ? 'active' : ''}}" data-filter="side" bindtap="setFilter">支线</view>
+      <view class="filter-item {{filter === 'done' ? 'active' : ''}}" data-filter="done" bindtap="setFilter">已完成</view>
+    </view>
+
+    <view wx:if="{{loadError}}" class="error-bar" bindtap="handleRetry">
+      <text>{{loadError}}（点击重试）</text>
+    </view>
+
+    <view class="group" wx:for="{{groups}}" wx:key="key">
+      <view class="group-head" data-key="{{item.key}}" bindtap="toggleGroup">
+        <view class="group-icon">{{item.icon}}</view>
+        <view class="group-meta">
+          <text class="group-name">{{item.name}}</text>
+          <text class="group-sub">{{item.subtitle}}</text>
+        </view>
+        <text class="group-count">{{item.quests.length}} 项</text>
+        <text class="group-arrow">{{item.expanded ? '⌃' : '⌄'}}</text>
+      </view>
+      <view wx:if="{{item.expanded}}" class="quest-list">
+        <view class="quest-card {{q.status === 'done' ? 'done' : ''}}" wx:for="{{item.quests}}" wx:for-item="q" wx:key="id">
+          <view class="card-head">
+            <view class="type-tag type-{{q.quest_type}}">{{q.typeLabel}}</view>
+            <text wx:if="{{q.due_date}}" class="due">截止 {{q.due_date}}</text>
+            <text class="reward">+{{q.xp_reward}} XP</text>
+          </view>
+          <text class="quest-title">{{q.title}}</text>
+          <text wx:if="{{q.description}}" class="quest-desc">{{q.description}}</text>
+          <view class="progress-row">
+            <view class="progress-bar"><view class="progress-fill" style="width: {{q.progressPercent}}%"></view></view>
+            <text class="progress-text" data-id="{{q.id}}" catchtap="editTarget">{{q.progress}}/{{q.target}} ✎</text>
+          </view>
+          <view class="card-foot">
+            <view class="card-actions">
+              <text class="action" data-id="{{q.id}}" catchtap="openEdit">编辑</text>
+              <text class="action action-del" data-id="{{q.id}}" catchtap="confirmDelete">删除</text>
+            </view>
+            <view wx:if="{{q.status !== 'done'}}" class="checkin-btn" data-id="{{q.id}}" catchtap="checkIn">打卡 +1</view>
+            <view wx:else class="done-actions">
+              <text class="done-tag">✓ 已完成</text>
+              <text class="reset-link" data-id="{{q.id}}" catchtap="resetProgress">重置</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{!quests.length && !loadError}}" class="empty">
+      <text class="empty-icon">✦</text>
+      <text class="empty-text">任务板还是空的</text>
+      <text class="empty-sub">从模板开始，或者创建你的第一个主线任务</text>
+      <view class="empty-btns">
+        <view class="empty-btn primary" bindtap="openTemplates">选用模板</view>
+        <view class="empty-btn" bindtap="openCreate">新建任务</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showForm}}" class="modal-mask" catchtap="closeForm">
+    <view class="modal" catchtap="noop">
+      <text class="modal-title">{{editingId ? '编辑任务' : '新建任务'}}</text>
+      <text class="field-label">任务类型</text>
+      <view class="type-select">
+        <view class="type-opt {{form.quest_type === 'main' ? 'active' : ''}}" data-type="main" bindtap="selectType">主线</view>
+        <view class="type-opt {{form.quest_type === 'side' ? 'active' : ''}}" data-type="side" bindtap="selectType">支线</view>
+      </view>
+      <text class="field-label">任务名称</text>
+      <input class="field-input" placeholder="例如：完成职业认证" value="{{form.title}}" data-field="title" bindinput="onFieldInput" />
+      <text class="field-label">所属章节</text>
+      <view class="chapter-chips">
+        <view class="chip {{form.chapter === item ? 'active' : ''}}" wx:for="{{chapters}}" wx:key="*this" data-chapter="{{item}}" bindtap="selectChapter">{{item}}</view>
+      </view>
+      <text class="field-label">描述（可选）</text>
+      <input class="field-input" placeholder="补充说明" value="{{form.description}}" data-field="description" bindinput="onFieldInput" />
+      <view class="field-row">
+        <view class="field-col">
+          <text class="field-label">奖励 XP</text>
+          <input class="field-input" type="number" value="{{form.xp_reward}}" data-field="xp_reward" bindinput="onFieldInput" />
+        </view>
+        <view class="field-col">
+          <text class="field-label">目标次数</text>
+          <input class="field-input" type="number" value="{{form.target}}" data-field="target" bindinput="onFieldInput" />
+        </view>
+      </view>
+      <text class="field-label">截止日期（可选）</text>
+      <input class="field-input" placeholder="YYYY-MM-DD" value="{{form.due_date}}" data-field="due_date" bindinput="onFieldInput" />
+      <text class="field-error" wx:if="{{formError}}">{{formError}}</text>
+      <view class="modal-actions">
+        <view class="btn-cancel" bindtap="closeForm">取消</view>
+        <view class="btn-save" bindtap="submitForm">{{submitting ? '保存中…' : '保存'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showTemplates}}" class="modal-mask" catchtap="closeTemplates">
+    <view class="modal tpl-modal" catchtap="noop">
+      <text class="modal-title">主线任务模板</text>
+      <text class="modal-sub">人生常见关卡，选一个改造成本属于你的任务</text>
+      <view class="tpl-item" wx:for="{{templates}}" wx:key="title" data-index="{{index}}" bindtap="applyTemplate">
+        <view class="tpl-info">
+          <text class="tpl-title">{{item.title}}</text>
+          <text class="tpl-desc">{{item.chapter}} · {{item.description || '点击直接添加'}}</text>
+        </view>
+        <text class="tpl-xp">+{{item.xp_reward}}</text>
+      </view>
+      <view class="modal-actions">
+        <view class="btn-cancel" bindtap="closeTemplates">关闭</view>
+        <view class="btn-save" bindtap="applyAllTemplates">全部添加</view>
+      </view>
+    </view>
+  </view>
+</view>
+  <mini-player />

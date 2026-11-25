@@ -1,0 +1,11 @@
+# 微信开发者工具本地缓存
+*.wxss.local
+project.private.config.json
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+npm-debug.log*

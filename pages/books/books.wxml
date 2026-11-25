@@ -1,0 +1,252 @@
+<view class="page">
+  <view class="hero">
+    <view class="hero-lines">
+      <text class="hero-eyebrow">MY BOOKSHELF · 已读记录</text>
+      <text class="hero-title">我的书架</text>
+      <text class="hero-sub">手动添加读过的书，或从自己的 CSV / JSON 导入；数据只属于你</text>
+    </view>
+    <view class="hero-add" bindtap="openForm">
+      <text class="add-plus">＋</text>
+      <text class="add-label">记一本</text>
+    </view>
+  </view>
+
+  <!-- 微信读书式概览：所有数字都由已录入的书算出，无记录就显示 0 -->
+  <view class="stat-card">
+    <view class="sc-item"><text class="sc-num">{{stats.readCount}}</text><text class="sc-label">已读</text></view>
+    <view class="sc-div"></view>
+    <view class="sc-item"><text class="sc-num">{{stats.thisYear}}</text><text class="sc-label">{{stats.year}} 年读完</text></view>
+    <view class="sc-div"></view>
+    <view class="sc-item"><text class="sc-num">{{stats.readingCount}}</text><text class="sc-label">在读</text></view>
+    <view class="sc-div"></view>
+    <view class="sc-item"><text class="sc-num">{{stats.minutes}}</text><text class="sc-label">累计分钟</text></view>
+  </view>
+
+  <view class="goal-card">
+    <view class="gc-top">
+      <text class="gc-title">{{goalTitle}}</text>
+      <text class="gc-edit" catchtap="openGoal">{{stats.goal ? '调整' : '设定目标'}}</text>
+    </view>
+    <view class="gc-bar"><view class="gc-bar-fill" style="width: {{stats.goalPercent}}%"></view></view>
+    <text class="gc-sub">{{goalSub}}</text>
+  </view>
+
+  <view class="wall-card">
+    <view class="wall-head">
+      <text class="wall-title">{{stats.year}} 年度书墙</text>
+      <text class="wall-sub">{{stats.thisYear}} 本 · 按读完月份</text>
+    </view>
+    <view class="wall-bars">
+      <view class="wb-col" wx:for="{{stats.byMonth}}" wx:key="month">
+        <view class="wb-bar" style="height: {{item.height}}rpx"></view>
+        <text class="wb-label">{{item.month}}</text>
+        <text class="wb-count">{{item.count || ''}}</text>
+      </view>
+    </view>
+    <text class="wall-foot">{{ratingFoot}}</text>
+  </view>
+
+  <view class="ref-note">
+    <text class="rn-title">参考的开源读书项目</text>
+    <text class="rn-line">数据模型参考 Jelu / LibrisLog / BookWyrm（状态、起止日期、评分、短评、Goodreads CSV 导入导出）；体验参考 readNeo / dsh-weread 的微信读书式书架与年度书墙。</text>
+    <text class="rn-line">本模块不接入微信读书账号、不抓取任何平台数据；「已读」是本人手动记录，不是平台认证。导出为开放 JSON / CSV，可并入人生存档迁移。</text>
+  </view>
+
+  <view class="section-head">
+    <view class="section-title-wrap">
+      <text class="section-eyebrow">SHELF · {{stats.total}} BOOKS</text>
+      <text class="section-title">书架</text>
+    </view>
+    <text class="section-badge" catchtap="openImport">批量导入 →</text>
+  </view>
+
+  <scroll-view scroll-x class="status-filter">
+    <view class="chip {{statusFilter === item.key ? 'active' : ''}}"
+      wx:for="{{statusTabs}}" wx:key="key" data-key="{{item.key}}" bindtap="setStatusFilter">
+      {{item.icon}} {{item.label}}
+    </view>
+  </scroll-view>
+
+  <scroll-view wx:if="{{yearOptions.length > 1}}" scroll-x class="year-filter">
+    <view class="chip small {{yearFilter === item ? 'active' : ''}}"
+      wx:for="{{yearOptions}}" wx:key="*this" data-year="{{item}}" bindtap="setYearFilter">
+      {{item === 'all' ? '全部年份' : item}}
+    </view>
+  </scroll-view>
+
+  <view class="search-row">
+    <input class="search-input" placeholder="搜书名 / 作者 / 短评 / 标签" value="{{keyword}}" bindinput="onKeywordInput" />
+    <text wx:if="{{keyword}}" class="search-clear" catchtap="clearKeyword">✕</text>
+  </view>
+
+  <view wx:if="{{viewBooks.length}}" class="book-grid">
+    <view class="book-card" wx:for="{{viewBooks}}" wx:key="id" data-id="{{item.id}}" bindtap="openForm">
+      <view class="bk-cover" style="background: {{item.coverColor}}">
+        <image wx:if="{{item.cover}}" src="{{item.cover}}" class="bk-cover-img" mode="aspectFill" />
+        <text wx:else>{{item.coverText}}</text>
+      </view>
+      <view class="bk-body">
+        <text class="bk-title">{{item.title}}</text>
+        <text class="bk-author">{{item.author || '未填作者'}}</text>
+        <text class="bk-meta">{{item.metaText}}</text>
+        <view class="bk-tags">
+          <text class="bk-status s-{{item.status}}">{{item.statusIcon}} {{item.statusLabel}}</text>
+          <text class="bk-rating">{{item.ratingText}}</text>
+        </view>
+        <view class="bk-progress"><view class="bk-progress-fill" style="width: {{item.progress}}%"></view></view>
+        <text class="bk-progress-text">{{item.progressText}}</text>
+        <text wx:if="{{item.review}}" class="bk-review">“{{item.review}}”</text>
+      </view>
+      <view class="bk-actions">
+        <text wx:if="{{!item.isRead}}" class="bk-act primary" data-id="{{item.id}}" catchtap="quickRead">标为已读</text>
+        <text wx:if="{{item.status === 'reading'}}" class="bk-act" data-id="{{item.id}}" catchtap="bumpProgress">+10%</text>
+        <text class="bk-act" data-id="{{item.id}}" catchtap="openForm">编辑</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="empty-state" bindtap="openForm">
+    <text class="empty-icon">📚</text>
+    <text class="empty-title">{{stats.total ? '没有符合条件的书' : '书架还是空的'}}</text>
+    <text class="empty-desc">{{stats.total ? '换个筛选条件，或清空搜索词试试。' : '记下第一本读过的书，或粘贴一份 Goodreads / 微信读书导出的 CSV。'}}</text>
+    <text class="empty-cta">＋ 添加第一本书</text>
+  </view>
+
+  <view class="export-row">
+    <view class="export-btn" catchtap="copyCsv">复制 CSV 清单</view>
+    <view class="export-btn" catchtap="copyJson">复制开放 JSON</view>
+    <view class="export-btn ghost" catchtap="openImport">批量导入</view>
+  </view>
+
+  <text class="footer-note">数据本地保存，可导出 JSON / CSV 自行迁移；已读书目会同步进入人生年报、资产负债表与人生存档</text>
+
+  <!-- 添加 / 编辑弹层：固定 px 高度，避免真机 vh 塌陷 -->
+  <view wx:if="{{showForm}}" class="modal-mask" bindtap="closeForm">
+    <view class="form-sheet" style="{{sheetStyle}}" catchtap="noop">
+      <view class="sheet-handle"></view>
+      <view class="form-head">
+        <text class="form-title">{{editingId ? '编辑这本书' : '记一本读过的书'}}</text>
+        <text class="form-close" catchtap="closeForm">✕</text>
+      </view>
+      <scroll-view scroll-y class="form-body">
+        <view class="field">
+          <text class="field-label">书名 <text class="required">*</text></text>
+          <input class="field-input" placeholder="例：置身事内" value="{{form.title}}" data-field="title" bindinput="onFormInput" />
+        </view>
+        <view class="field">
+          <text class="field-label">作者</text>
+          <input class="field-input" placeholder="例：兰小欢" value="{{form.author}}" data-field="author" bindinput="onFormInput" />
+        </view>
+
+        <view class="field">
+          <text class="field-label">阅读状态</text>
+          <view class="opt-row">
+            <view class="opt {{form.status === item.key ? 'active' : ''}}"
+              wx:for="{{statusOptions}}" wx:key="key"
+              data-key="{{item.key}}" catchtap="pickStatus">{{item.icon}} {{item.label}}</view>
+          </view>
+        </view>
+
+        <view class="field">
+          <text class="field-label">评分 <text class="field-hint">可留空，不做排名</text></text>
+          <view class="opt-row">
+            <view class="star {{form.rating >= item ? 'on' : ''}}" wx:for="{{ratingOptions}}" wx:key="*this"
+              data-n="{{item}}" catchtap="pickRating">{{form.rating >= item ? '★' : '☆'}}</view>
+            <text wx:if="{{form.rating}}" class="rate-clear" catchtap="clearRating">清除</text>
+          </view>
+        </view>
+
+        <view class="field-row">
+          <view class="field half">
+            <text class="field-label">开始日期</text>
+            <input class="field-input" placeholder="YYYY-MM-DD" value="{{form.startedAt}}" data-field="startedAt" bindinput="onFormInput" />
+          </view>
+          <view class="field half">
+            <text class="field-label">读完日期</text>
+            <picker mode="date" value="{{form.finishedAt || '2026-01-01'}}" data-field="finishedAt" bindchange="onFormDate">
+              <view class="date-picker">📅 {{form.finishedAt || '点日历选'}}</view>
+            </picker>
+            <input class="field-input sub" placeholder="或直接输入 YYYY-MM-DD" value="{{form.finishedAt}}" data-field="finishedAt" bindinput="onFormInput" />
+          </view>
+        </view>
+
+        <view class="field-row">
+          <view class="field third"><text class="field-label">页数</text><input class="field-input" type="number" placeholder="0" value="{{form.pages}}" data-field="pages" bindinput="onFormInput" /></view>
+          <view class="field third"><text class="field-label">分钟</text><input class="field-input" type="number" placeholder="0" value="{{form.minutes}}" data-field="minutes" bindinput="onFormInput" /></view>
+          <view class="field third"><text class="field-label">进度 %</text><input class="field-input" type="number" placeholder="0-100" value="{{form.progress}}" data-field="progress" bindinput="onFormInput" /></view>
+        </view>
+
+        <view class="field">
+          <text class="field-label">短评 / 想法</text>
+          <textarea class="field-textarea" placeholder="读完想说的一句话…" value="{{form.review}}" data-field="review" bindinput="onFormInput" maxlength="500" auto-height />
+        </view>
+
+        <view class="field">
+          <text class="field-label">标签 <text class="field-hint">逗号分隔</text></text>
+          <input class="field-input" placeholder="例：经济，非虚构" value="{{form.tags}}" data-field="tags" bindinput="onFormInput" />
+        </view>
+        <view class="field">
+          <text class="field-label">封面链接 / ISBN <text class="field-hint">选填</text></text>
+          <input class="field-input" placeholder="封面 https://…" value="{{form.cover}}" data-field="cover" bindinput="onFormInput" />
+          <input class="field-input sub" placeholder="ISBN" value="{{form.isbn}}" data-field="isbn" bindinput="onFormInput" />
+        </view>
+
+        <view wx:if="{{formError}}" class="form-error">{{formError}}</view>
+        <view class="form-pad"></view>
+      </scroll-view>
+      <view class="form-footer">
+        <text wx:if="{{editingId}}" class="btn-del" catchtap="removeBook">删除</text>
+        <view class="btn-cancel" catchtap="closeForm">取消</view>
+        <view class="btn-save" catchtap="saveBook">{{editingId ? '保存修改' : '加入书架'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 批量导入弹层 -->
+  <view wx:if="{{showImport}}" class="modal-mask" bindtap="closeImport">
+    <view class="form-sheet" style="{{sheetStyle}}" catchtap="noop">
+      <view class="sheet-handle"></view>
+      <view class="form-head">
+        <text class="form-title">批量导入已读数据</text>
+        <text class="form-close" catchtap="closeImport">✕</text>
+      </view>
+      <scroll-view scroll-y class="form-body">
+        <view class="import-tip">
+          <text class="it-title">支持三种格式</text>
+          <text class="it-line">① 带表头的 CSV：书名, 作者, 状态, 评分, 读完日期, 阅读时长(分钟), 短评</text>
+          <text class="it-line">② Goodreads / 微信读书导出的 CSV（自动映射 Title / Author / My Rating / Date Read 等表头）</text>
+          <text class="it-line">③ JSON 数组，或每行「书名 | 作者 | 评分 | 读完日期 | 短评」</text>
+          <text class="it-line">按「书名 + 作者」去重；没填读完日期的不会自动补今天，避免年度统计被编造。</text>
+        </view>
+        <view class="field">
+          <text class="field-label">粘贴内容</text>
+          <textarea class="import-textarea" placeholder="把 CSV / JSON 粘贴到这里…" value="{{importText}}" bindinput="onImportInput" maxlength="200000" auto-height />
+        </view>
+        <view class="sample-btn" catchtap="pasteSample">填入示例 CSV</view>
+        <view wx:if="{{importHint}}" class="import-hint">{{importHint}}</view>
+        <view wx:if="{{importResult}}" class="import-result">
+          <text>识别 {{importResult.parsed}} 本 · 新增 {{importResult.added}} 本 · 跳过重复 {{importResult.skipped}} 本</text>
+        </view>
+        <view class="form-pad"></view>
+      </scroll-view>
+      <view class="form-footer">
+        <view class="btn-cancel" catchtap="closeImport">关闭</view>
+        <view class="btn-save" catchtap="doImport">导入到书架</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 年度目标：固定 rpx 高度居中，不依赖 vh -->
+  <view wx:if="{{goalOpen}}" class="goal-mask" bindtap="closeGoal">
+    <view class="goal-sheet" catchtap="noop">
+      <text class="gs-title">今年想读多少本？</text>
+      <text class="gs-sub">只是给自己的刻度，不打卡、不排名；填 0 可清除</text>
+      <input class="gs-input" type="number" value="{{goalText}}" bindinput="onGoalInput" placeholder="例如 24" />
+      <view class="gs-actions">
+        <view class="gs-cancel" catchtap="closeGoal">取消</view>
+        <view class="gs-ok" catchtap="saveGoal">保存</view>
+      </view>
+    </view>
+  </view>
+</view>
+<mini-player />

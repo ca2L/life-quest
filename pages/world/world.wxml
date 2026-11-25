@@ -1,0 +1,449 @@
+<view class="page">
+  <view wx:if="{{authState === 'checking'}}" class="state-card">
+    <view class="spinner"></view>
+    <text class="state-title">正在打开世界地图…</text>
+  </view>
+
+  <view wx:elif="{{authState === 'signed-out'}}" class="state-card login-wrap">
+    <view class="login-hero">
+      <text class="login-eyebrow">OPEN WORLD · 开放世界</text>
+      <text class="login-title">点亮你的\n人生地图</text>
+      <text class="login-desc">每段足迹，都会在真实地图上点亮一个地点。</text>
+    </view>
+    <login-panel bind:signedin="onSignedIn" />
+  </view>
+
+  <view wx:else class="content">
+    <!-- 顶部 world hero -->
+    <view class="world-hero">
+      <view class="wh-stars"></view>
+      <view class="wh-top">
+        <text class="wh-eyebrow">THE WORLD · 你的世界</text>
+        <text class="wh-title">开放世界地图</text>
+        <text class="wh-sub">走过的地方被点亮，遇见的人成为羁绊</text>
+      </view>
+      <view class="wh-progress">
+        <view class="whp-ring">
+          <text class="whp-num">{{realMap.cityCount}}</text>
+          <text class="whp-unit">城</text>
+        </view>
+        <view class="whp-copy">
+          <text class="whp-title">已探索 {{realMap.litCount}} 个地点</text>
+          <text class="whp-detail">来自 {{realMap.withGeoCount}} 段带坐标的足迹 · {{companionCount}} 位同行者</text>
+          <view class="whp-bar"><view class="whp-fill" style="width: {{world.percent}}%"></view></view>
+          <text class="whp-caption">分类探索度 {{world.percent}}% · {{world.explored}}/{{world.total}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 主视图切换：中国地图 / 全球足迹 / 角色卡 -->
+    <view class="main-tabs three">
+      <view class="main-tab {{mainTab === 'map' ? 'active' : ''}}" data-tab="map" bindtap="setMainTab">🗺️ 中国</view>
+      <view class="main-tab {{mainTab === 'global' ? 'active' : ''}}" data-tab="global" bindtap="setMainTab">🌍 全球</view>
+      <view class="main-tab {{mainTab === 'roles' ? 'active' : ''}}" data-tab="roles" bindtap="setMainTab">💫 角色卡 <text class="mt-badge">{{characterCount}}</text></view>
+    </view>
+
+    <view wx:if="{{loadError}}" class="error-bar" bindtap="handleRetry">
+      <text>{{loadError}}（点击重试）</text>
+    </view>
+
+    <!-- ===== 真实地图视图 ===== -->
+    <view wx:if="{{mainTab === 'map'}}">
+      <!-- 年份筛选条：航旅纵横式时间轴 -->
+      <scroll-view scroll-x class="year-bar">
+        <view class="year-chip {{activeYear === item ? 'active' : ''}}"
+          wx:for="{{board.yearOptions}}" wx:key="*this" data-year="{{item}}" bindtap="setYear">
+          {{item}}
+        </view>
+      </scroll-view>
+
+      <!-- 旅程分享卡：足迹旅记式发光深色卡（沿用品牌紫） -->
+      <view class="travel-board">
+        <view class="tb-head">
+          <text class="tb-eyebrow">MY TRAVEL MAP · 我的旅程</text>
+          <view class="tb-badges">
+            <text class="tb-mile">🧭 {{board.distanceKm}} km</text>
+            <text class="tb-year">截至 {{board.asOf}}</text>
+          </view>
+        </view>
+        <view class="tb-hero">
+          <text class="tb-line1">{{activeYear === '全部' ? '我的' : activeYear + ' 年'}}旅行足迹</text>
+          <text class="tb-big">我点亮了 {{board.map.litCount}} 地点</text>
+        </view>
+        <!-- 三格统计：省 / 城 / 旅行（分享卡同构） -->
+        <view class="tb-share-stats">
+          <view class="tss-item">
+            <text class="tss-num">{{board.provinceCount}}</text>
+            <text class="tss-label">省级地区</text>
+          </view>
+          <view class="tss-divider"></view>
+          <view class="tss-item">
+            <text class="tss-num">{{board.map.cityCount}}</text>
+            <text class="tss-label">城市</text>
+          </view>
+          <view class="tss-divider"></view>
+          <view class="tss-item">
+            <text class="tss-num">{{board.scopedCount}}</text>
+            <text class="tss-label">旅行故事</text>
+          </view>
+        </view>
+        <!-- 点亮省份：真实省界图（默认）/ 格子省份图 / 高德式电量条 -->
+        <view wx:if="{{board.provinceCount}}" class="pb-section">
+          <view class="pb-head">
+            <view class="pb-title-wrap">
+              <text class="pb-title">足迹遍布 · 点亮省份</text>
+              <text class="pb-total">已点亮 {{board.provinceCount}}/34 个省级行政区</text>
+            </view>
+            <view class="pb-view-switch three">
+              <text class="pv-opt {{provinceView === 'real' ? 'active' : ''}}" data-mode="real" bindtap="setProvinceView">🗺️ 省界</text>
+              <text class="pv-opt {{provinceView === 'bars' ? 'active' : ''}}" data-mode="bars" bindtap="setProvinceView">🔋 电量</text>
+              <text class="pv-opt {{provinceView === 'grid' ? 'active' : ''}}" data-mode="grid" bindtap="setProvinceView">▦ 格子</text>
+            </view>
+          </view>
+
+          <!-- 真实省界：canvas 主路径（真机）/ SVG data URL（H5 预览与兜底） -->
+          <view wx:if="{{provinceView === 'real'}}" class="cm-wrap">
+            <canvas wx:if="{{canvasAvailable}}" type="2d" id="china-map" class="cm-canvas"></canvas>
+            <image wx:else class="cm-image" src="{{chinaMapSrc}}" mode="widthFix" binderror="onChinaMapError" />
+            <text class="cm-note">省界数据：阿里云 DataV 行政区划边界 · 南海诸岛按规范插图 · 仅供个人足迹可视化，正式发布需使用带审图号的标准地图</text>
+          </view>
+
+          <!-- 格子省份图（兜底样式） -->
+          <view wx:elif="{{provinceView === 'grid'}}" class="pg-map">
+            <view class="pg-cell {{item.lit ? 'lit' : ''}}"
+              wx:for="{{board.provinceGrid}}" wx:key="name"
+              style="left: {{item.left}}; top: {{item.top}};">
+              <text class="pg-abbr">{{item.abbr}}</text>
+              <text wx:if="{{item.count}}" class="pg-count">{{item.count}}</text>
+            </view>
+            <view class="pg-legend">
+              <text class="pg-legend-dot lit"></text>
+              <text class="pg-legend-text">已点亮 {{board.provinceCount}} 省</text>
+              <text class="pg-legend-dot"></text>
+              <text class="pg-legend-text">尚未抵达</text>
+            </view>
+          </view>
+
+          <!-- 电量条样式：每省一条，长度 = 相对最高省的占比 -->
+          <view wx:else>
+            <view class="pb-row {{item.pct >= 100 ? 'full' : ''}}" wx:for="{{board.provinces}}" wx:key="name">
+              <text class="pb-name">{{item.name}}</text>
+              <view class="pb-battery">
+                <view class="pb-track">
+                  <view class="pb-fill" style="width: {{item.pct}}%"></view>
+                </view>
+                <view class="pb-cap"></view>
+              </view>
+              <text class="pb-count">{{item.count}}<text class="pb-unit">段</text></text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="map-toolbar">
+        <text class="map-toolbar-label">腾讯地图 · GCJ-02 · 航迹连线</text>
+        <view class="map-mode-switch">
+          <text class="mm-opt {{mapMode === 'map' ? 'active' : ''}}" data-mode="map" bindtap="setMapMode">地图</text>
+          <text class="mm-opt {{mapMode === 'list' ? 'active' : ''}}" data-mode="list" bindtap="setMapMode">清单</text>
+        </view>
+      </view>
+
+      <!-- 微信原生 map 组件：底层腾讯地图，合规；polyline 连出个人旅行航迹 -->
+      <view wx:if="{{mapMode === 'map' && mapAvailable}}" class="map-wrap">
+        <map
+          class="real-map"
+          latitude="{{realMap.center.latitude}}"
+          longitude="{{realMap.center.longitude}}"
+          scale="{{realMap.scale}}"
+          markers="{{realMap.markers}}"
+          polyline="{{board.polyline}}"
+          show-location
+          bindmarkertap="onMarkerTap"
+        ></map>
+        <view class="map-tip">
+          <text class="mt-dot"></text>
+          紫色虚线 = 你的旅行航迹 · 点亮标记 = 到过的地点
+        </view>
+      </view>
+
+      <!-- 无地图能力 / 清单模式：地点清单 -->
+      <view wx:else class="place-list">
+        <view class="place-head">
+          <text class="place-head-title">已点亮的地点</text>
+          <text class="place-head-count">{{realMap.litCount}} 处</text>
+        </view>
+        <view wx:if="{{realMap.places.length}}" class="place-item {{focusPlace === item.name ? 'focused' : ''}}" wx:for="{{realMap.places}}" wx:key="name"
+          data-name="{{item.name}}" bindtap="openPlace">
+          <view class="place-pin">📍</view>
+          <view class="place-info">
+            <text class="place-name">{{item.name}}</text>
+            <text class="place-meta">{{item.city || '地点'}} · {{item.count}} 段足迹 · 最近 {{item.lastDate}}</text>
+          </view>
+          <text class="place-arrow">›</text>
+        </view>
+        <view wx:if="{{realMap.places.length}}" class="place-note">点击地点用腾讯地图打开真实位置</view>
+      </view>
+
+      <view wx:if="{{!realMap.litCount}}" class="map-empty" bindtap="goFootprints">
+        <text class="me-icon">📍</text>
+        <text class="me-title">地图上还没有点亮的地方</text>
+        <text class="me-desc">去记录足迹时「地图选点」，\n你的足迹就会出现在真实地图上。</text>
+        <text class="me-cta">去记录带坐标的足迹 →</text>
+      </view>
+
+      <!-- 分类探索成就（辅助） -->
+      <view class="section-head">
+        <view class="section-title-wrap">
+          <text class="section-eyebrow">EXPLORATION</text>
+          <text class="section-title">分类探索</text>
+        </view>
+        <text class="section-tip">{{world.explored}}/{{world.total}} 地块</text>
+      </view>
+      <scroll-view wx:if="{{realmFilter.length > 1}}" scroll-x class="realm-filter">
+        <view class="realm-chip {{activeRealmKey === item.key ? 'active' : ''}}"
+          wx:for="{{realmFilter}}" wx:key="key" data-key="{{item.key}}" bindtap="setRealmFilter">
+          {{item.icon}} {{item.label}}
+        </view>
+      </scroll-view>
+      <view class="realm-list">
+        <view class="realm-card" wx:for="{{world.realms}}" wx:key="key"
+          wx:if="{{activeRealmKey === 'all' || activeRealmKey === item.key}}">
+          <view class="realm-head">
+            <view class="realm-badge" style="background: {{item.color}}">{{item.icon}}</view>
+            <view class="realm-meta">
+              <text class="realm-name">{{item.name}}</text>
+              <text class="realm-stat" wx:if="{{item.visited}}">{{item.litCount}}/{{item.tiles.length}} 已点亮 · {{item.visited}} 次到访</text>
+              <text class="realm-stat dim" wx:else>迷雾未开 · 去留下足迹吧</text>
+            </view>
+            <text class="realm-pct" style="color: {{item.visited ? item.color : '#b9b4cc'}}">{{item.percent}}%</text>
+          </view>
+          <view class="tile-row">
+            <view class="tile {{tile.lit ? 'lit' : 'fog'}} lv-{{tile.level}}"
+              wx:for="{{item.tiles}}" wx:for-item="tile" wx:key="name"
+              style="{{tile.lit ? 'background:' + item.color : ''}}">
+              <text class="tile-icon">{{tile.lit ? (tile.level >= 3 ? '🏆' : (tile.level === 2 ? '✦' : '·')) : '🌫'}}</text>
+              <text class="tile-name">{{tile.lit ? tile.name : '未探索'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 全球足迹视图：腾讯地图合规底图 + 国家点亮（不绘国界） ===== -->
+    <view wx:elif="{{mainTab === 'global'}}">
+      <view class="global-hero">
+        <text class="gh-eyebrow">AROUND THE WORLD · 全球足迹</text>
+        <text class="gh-title">我走过 {{globalBoard.countryCount}} 个国家 / 地区</text>
+        <text class="gh-sub">每一段带坐标的足迹，都会在这里点亮一个国家</text>
+        <view class="gh-stats">
+          <view class="ghs-item"><text class="ghs-num">{{globalBoard.overseasCountryCount}}</text><text class="ghs-label">境外国家</text></view>
+          <view class="ghs-divider"></view>
+          <view class="ghs-item"><text class="ghs-num">{{globalBoard.chinaCount}}</text><text class="ghs-label">中国足迹</text></view>
+          <view class="ghs-divider"></view>
+          <view class="ghs-item"><text class="ghs-num">{{globalBoard.markers.length}}</text><text class="ghs-label">坐标足迹</text></view>
+        </view>
+      </view>
+
+      <view class="global-map-card">
+        <view class="gmc-head">
+          <text class="gmc-title">🌐 世界地图 · 腾讯地图</text>
+          <text class="gmc-scale">全球视图</text>
+        </view>
+        <map wx:if="{{mapAvailable}}" class="global-map"
+          latitude="{{globalBoard.center.latitude}}"
+          longitude="{{globalBoard.center.longitude}}"
+          scale="3"
+          markers="{{globalBoard.markers}}"
+          show-location="{{false}}"
+        ></map>
+        <view wx:else class="gmc-fallback">当前预览环境不支持地图组件，国家点亮清单仍可使用</view>
+        <text class="gmc-note">境外底图由腾讯地图提供（GCJ-02）；不接境外地图源，不绘制国界。</text>
+        <view class="gmc-action" bindtap="goFootprints">
+          <text class="gmc-action-text">🌍 想添加境外地点？去「足迹」页用全球选点</text>
+          <text class="gmc-action-arrow">→</text>
+        </view>
+      </view>
+
+      <view class="section-head">
+        <view class="section-title-wrap">
+          <text class="section-eyebrow">COUNTRIES · 点亮国家</text>
+          <text class="section-title">我的世界版图</text>
+        </view>
+        <text class="section-tip">{{globalBoard.countryCount}} 个国家 / 地区</text>
+      </view>
+
+      <view wx:for="{{globalBoard.groups}}" wx:key="name" class="continent-group">
+        <view class="cg-head"><text class="cg-icon">{{item.icon}}</text><text class="cg-name">{{item.name}}</text><text class="cg-count">{{item.countries.length}} 个</text></view>
+        <view class="country-grid">
+          <view class="country-card lit" wx:for="{{item.countries}}" wx:for-item="c" wx:key="name">
+            <text class="ct-flag">{{c.flag}}</text>
+            <text class="ct-name">{{c.name}}</text>
+            <text class="ct-count">{{c.count}} 段足迹</text>
+            <text class="ct-place">{{c.firstPlace}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{!globalBoard.countryCount}}" class="global-empty" bindtap="goFootprints">
+        <text class="ge-icon">🌍</text>
+        <text class="ge-title">世界地图还是一片空白</text>
+        <text class="ge-desc">去足迹里用「地图选点」记录带坐标的地点，\n无论是国内还是海外，都会在这里点亮。</text>
+        <text class="ge-cta">去记录足迹 →</text>
+      </view>
+    </view>
+
+    <!-- ===== 角色卡视图 ===== -->
+    <view wx:else>
+      <view class="section-head role-head">
+        <view class="section-title-wrap">
+          <text class="section-eyebrow">COMPANIONS · 同行者</text>
+          <text class="section-title">角色卡</text>
+        </view>
+        <view class="add-role" bindtap="openForm">＋ 添加</view>
+      </view>
+
+      <view class="companion-summary" wx:if="{{characterCount}}">
+        <view class="cs-item"><text class="cs-num">{{characterCount}}</text><text class="cs-label">角色</text></view>
+        <view class="cs-divider"></view>
+        <view class="cs-item"><text class="cs-num">{{companionStats.totalLinks}}</text><text class="cs-label">次同行（真实足迹）</text></view>
+        <view class="cs-divider"></view>
+        <view class="cs-item"><text class="cs-num">{{totalIntimacy}}</text><text class="cs-label">总亲密度（玩法值）</text></view>
+        <view class="cs-divider"></view>
+        <view class="cs-item" wx:if="{{topCharacter}}"><text class="cs-emoji">{{topCharacter.avatar}}</text><text class="cs-label">羁绊最深</text></view>
+      </view>
+
+      <view class="truth-note">
+        <text class="tn-line">同行次数 = 真实足迹里含该人物的记录数（同名去重、主角不计入），不再是角色卡里的累计计数器。</text>
+        <text class="tn-line">已统计 {{companionStats.footprintsWithPeople}} 段带同行者的足迹、{{companionStats.charactersWithRecords}} 位有共同足迹的角色；亲密度是成长玩法数值，非客观统计。</text>
+        <text wx:if="{{companionStats.unlinkedCount}}" class="tn-line warn">有 {{companionStats.unlinkedCount}} 次同行写在足迹里但没有对应角色卡（如 {{companionStats.unlinkedNames[0].name}}），未计入任何角色，避免张冠李戴。</text>
+      </view>
+
+      <view class="companion-list">
+        <view class="companion-card" wx:for="{{characters}}" wx:key="id">
+          <view class="cc-top">
+            <view class="cc-avatar" style="background: {{item.color}}">
+              <image wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" class="cc-avatar-img" mode="aspectFill" />
+              <text wx:else>{{item.avatar}}</text>
+            </view>
+            <view class="cc-meta">
+              <view class="cc-name-row">
+                <text class="cc-name">{{item.name}}</text>
+                <text class="cc-relation">{{item.relation}}</text>
+              </view>
+              <view class="cc-level" style="color: {{item.level.color}}">
+                <text>{{item.level.icon}} {{item.level.name}}</text>
+                <text class="cc-value">亲密度 {{item.level.value}}</text>
+              </view>
+              <view wx:if="{{item.metDate}}" class="cc-met">📅 相识于 {{item.metDate}}</view>
+            </view>
+            <text class="cc-edit" data-id="{{item.id}}" catchtap="editCharacter">编辑</text>
+          </view>
+          <view wx:if="{{item.story}}" class="cc-story">"{{item.story}}"</view>
+          <view class="cc-bar"><view class="cc-bar-fill" style="width: {{item.level.percent}}%; background: {{item.level.color}}"></view></view>
+          <view class="cc-foot">
+            <text class="cc-meet">{{item.meetText}}</text>
+            <text wx:if="{{item.lastMetText}}" class="cc-last">{{item.lastMetText}}</text>
+            <text wx:if="{{!item.level.isMax}}" class="cc-next">距「{{item.level.nextName}}」还需 {{item.level.need}}</text>
+            <text wx:else class="cc-next max">👑 羁绊已满级</text>
+            <text class="cc-del" data-id="{{item.id}}" catchtap="removeCharacter">移除</text>
+          </view>
+          <view class="cc-verify" data-id="{{item.id}}" catchtap="toggleShared">
+            {{item.sharedOpen ? '收起核对' : '核对同行依据'}} · {{item.totalRecords}} 段足迹 {{item.sharedOpen ? '▲' : '▼'}}
+          </view>
+          <view wx:if="{{item.sharedOpen}}" class="cc-shared">
+            <view wx:if="{{item.sharedRecords.length}}" class="cs-list">
+              <view class="cs-row" wx:for="{{item.sharedRecords}}" wx:for-item="r" wx:key="id">
+                <text class="cs-date">{{r.date || '未标日期'}}</text>
+                <text class="cs-title">{{r.title}}</text>
+                <text wx:if="{{r.place}}" class="cs-place">{{r.place}}</text>
+              </view>
+              <text wx:if="{{item.totalRecords > item.sharedRecords.length}}" class="cs-more">仅显示最近 {{item.sharedRecords.length}} 段，共 {{item.totalRecords}} 段</text>
+            </view>
+            <text wx:else class="cs-empty">真实足迹里还没有出现这个名字，所以这里是 0。</text>
+            <view class="cs-link" catchtap="goFootprints">去足迹页核对 →</view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{!characterCount}}" class="companion-empty" bindtap="openForm">
+        <text class="ce-icon">💫</text>
+        <text class="ce-title">还没有角色卡</text>
+        <text class="ce-desc">添加家人、挚友、宠物……记录足迹时可勾选同行，亲密度会一起成长。</text>
+        <text class="ce-cta">＋ 创建第一张角色卡</text>
+      </view>
+    </view>
+
+    <text class="footer-note">同行数据来自真实足迹：记录足迹时勾选或填写同行人物，这里就会自动汇总；主角不计入，同一段足迹同名只算一次</text>
+  </view>
+
+  <!-- 角色编辑弹层 -->
+  <view wx:if="{{showForm}}" class="modal-mask" bindtap="closeForm">
+    <view class="form-sheet" style="{{sheetStyle}}" catchtap="noop">
+      <view class="sheet-handle"></view>
+      <view class="form-head">
+        <text class="form-title">{{editingId ? '编辑角色' : '新建角色卡'}}</text>
+        <text class="form-close" bindtap="closeForm">✕</text>
+      </view>
+      <scroll-view scroll-y class="form-body">
+        <view class="field">
+          <text class="field-label">头像</text>
+          <view class="avatar-upload-row">
+            <view class="avatar-preview" style="background: {{form.color}}">
+              <image wx:if="{{form.avatarUrl}}" src="{{form.avatarUrl}}" class="avatar-preview-img" mode="aspectFill" />
+              <text wx:else>{{form.avatar}}</text>
+            </view>
+            <view class="avatar-actions">
+              <view class="avatar-upload-btn" bindtap="uploadAvatar">{{uploading ? '处理中…' : '📷 上传头像'}}</view>
+              <text wx:if="{{form.avatarUrl}}" class="avatar-clear" bindtap="removeAvatar">移除照片</text>
+              <text wx:else class="avatar-tip">真机可从相册/拍照选图</text>
+            </view>
+          </view>
+          <view class="avatar-grid">
+            <view class="avatar-opt {{form.avatar === item && !form.avatarUrl ? 'active' : ''}}"
+              wx:for="{{avatars}}" wx:key="*this" data-avatar="{{item}}" bindtap="pickAvatar">{{item}}</view>
+          </view>
+        </view>
+        <view class="field">
+          <text class="field-label">角色名字 <text class="required">*</text></text>
+          <input class="field-input" placeholder="例：小美 / 妈妈 / 阿黄"
+            value="{{form.name}}" data-field="name" bindinput="onFieldInput" />
+        </view>
+        <view class="field">
+          <text class="field-label">与你的关系</text>
+          <view class="chip-row">
+            <view class="rel-chip {{form.relation === item ? 'active' : ''}}"
+              wx:for="{{relations}}" wx:key="*this" data-relation="{{item}}" bindtap="pickRelation">{{item}}</view>
+          </view>
+        </view>
+        <view class="field">
+          <text class="field-label">相识日期</text>
+          <view class="date-row">
+            <picker mode="date" value="{{form.metDate}}" end="{{todayKey}}" bindchange="onMetDateChange">
+              <view class="date-picker">{{form.metDate || '📅 选择相识的那一天'}}</view>
+            </picker>
+            <text wx:if="{{form.metDate}}" class="date-clear" bindtap="clearMetDate">清除</text>
+          </view>
+        </view>
+        <view class="field">
+          <text class="field-label">故事线</text>
+          <textarea class="field-textarea" placeholder="你们是怎么认识的？有哪些难忘的故事…"
+            value="{{form.story}}" data-field="story" bindinput="onFieldInput" maxlength="500" auto-height />
+        </view>
+        <view class="field">
+          <text class="field-label">角色主题色</text>
+          <view class="color-row">
+            <view class="color-opt {{form.color === item ? 'active' : ''}}"
+              wx:for="{{colors}}" wx:key="*this" data-color="{{item}}" bindtap="pickColor" style="background: {{item}}"></view>
+          </view>
+        </view>
+        <view wx:if="{{formError}}" class="form-error">{{formError}}</view>
+        <view class="form-pad"></view>
+      </scroll-view>
+      <view class="form-footer">
+        <view class="btn-cancel" bindtap="closeForm">取消</view>
+        <view class="btn-save {{saving ? 'disabled' : ''}}" bindtap="saveCharacter">{{saving ? '保存中…' : '保存角色'}}</view>
+      </view>
+    </view>
+  </view>
+</view>
+  <mini-player />

@@ -1,0 +1,197 @@
+.page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 36rpx 28rpx 80rpx;
+  background: #f6f6fa;
+}
+
+.state-card { display: flex; min-height: 70vh; align-items: center; flex-direction: column; justify-content: center; }
+.spinner {
+  width: 56rpx; height: 56rpx;
+  border: 6rpx solid #e4e1f5; border-top-color: #6f5ce8;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.state-title { margin-top: 24rpx; color: #6b6585; font-size: 28rpx; }
+.login-wrap { justify-content: flex-start; padding-top: 90rpx; }
+.login-hero { display: flex; align-items: flex-start; flex-direction: column; margin-bottom: 56rpx; }
+.login-eyebrow { color: #6f5ce8; font-size: 22rpx; font-weight: 600; letter-spacing: 6rpx; }
+.login-title { margin-top: 20rpx; color: #17152b; font-size: 58rpx; font-weight: 700; line-height: 1.28; letter-spacing: -1rpx; white-space: pre-line; }
+.login-desc { margin-top: 20rpx; color: #8a85a5; font-size: 26rpx; line-height: 1.6; }
+
+.player-card {
+  position: relative; overflow: hidden; padding: 34rpx;
+  border-radius: 30rpx;
+  background: linear-gradient(135deg, #241d52 0%, #4a37b0 100%);
+  box-shadow: 0 18rpx 40rpx rgba(52, 38, 140, 0.3);
+  animation: rise-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.player-glow {
+  position: absolute; top: -120rpx; right: -80rpx;
+  width: 320rpx; height: 320rpx; border-radius: 50%;
+  background: radial-gradient(circle, rgba(150, 130, 255, 0.35) 0%, rgba(150, 130, 255, 0) 70%);
+}
+.player-head { position: relative; display: flex; align-items: center; }
+.player-eyebrow { color: #b9aef7; font-size: 18rpx; font-weight: 600; letter-spacing: 3rpx; }
+.player-title { margin-top: 4rpx; }
+.avatar {
+  display: flex; width: 104rpx; height: 104rpx;
+  align-items: center; justify-content: center;
+  border: 4rpx solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%; background: rgba(255, 255, 255, 0.14);
+  color: #ffffff; font-size: 46rpx; font-weight: 700;
+}
+.player-meta { display: flex; margin-left: 24rpx; flex-direction: column; }
+.player-title { color: #ffffff; font-size: 36rpx; font-weight: 600; }
+.player-level { margin-top: 8rpx; color: #c9c2ef; font-size: 24rpx; }
+.xp-bar { height: 14rpx; margin-top: 28rpx; overflow: hidden; border-radius: 10rpx; background: rgba(255, 255, 255, 0.18); }
+.xp-fill { height: 100%; border-radius: 10rpx; background: #ffd166; transition: width 0.4s; }
+.xp-hint { display: block; margin-top: 14rpx; color: #c9c2ef; font-size: 22rpx; }
+
+.stats-row { display: flex; margin: 24rpx 0; padding: 28rpx 8rpx; border-radius: 24rpx; background: #ffffff; box-shadow: 0 6rpx 20rpx rgba(26, 22, 51, 0.05); }
+.stat { display: flex; flex: 1; align-items: center; flex-direction: column; }
+.stat-num { color: #4a37b0; font-size: 34rpx; font-weight: 700; }
+.stat-label { margin-top: 8rpx; color: #a09ab8; font-size: 20rpx; }
+.error-bar { margin-bottom: 20rpx; padding: 20rpx 24rpx; border-radius: 16rpx; background: #ffe9e9; color: #c0392b; font-size: 24rpx; }
+
+.section-head { display: flex; margin: 36rpx 4rpx 16rpx; align-items: center; justify-content: space-between; }
+.section-title { color: #17152b; font-size: 30rpx; font-weight: 600; }
+.section-tip { color: #a09ab8; font-size: 22rpx; }
+
+/* 成就进度概览 */
+.achievement-overview {
+  padding: 30rpx;
+  border-radius: 26rpx;
+  background: linear-gradient(135deg, #241d52 0%, #4a37b0 100%);
+  box-shadow: 0 14rpx 32rpx rgba(52, 38, 140, 0.24);
+  animation: rise-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ao-top { display: flex; align-items: center; }
+.ao-ring {
+  display: flex; width: 108rpx; height: 108rpx;
+  align-items: baseline; justify-content: center; flex-shrink: 0;
+  border: 6rpx solid rgba(255, 209, 102, 0.85); border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  padding-top: 30rpx; box-sizing: border-box;
+}
+.ao-num { color: #ffd166; font-size: 40rpx; font-weight: 700; }
+.ao-denom { color: #c9c2ef; font-size: 20rpx; }
+.ao-copy { display: flex; margin-left: 24rpx; flex-direction: column; }
+.ao-title { color: #ffffff; font-size: 30rpx; font-weight: 700; }
+.ao-sub { margin-top: 8rpx; color: #c9c2ef; font-size: 21rpx; line-height: 1.5; }
+.ao-bar { height: 12rpx; margin-top: 26rpx; overflow: hidden; border-radius: 8rpx; background: rgba(255, 255, 255, 0.16); }
+.ao-bar-fill { height: 100%; border-radius: 8rpx; background: linear-gradient(90deg, #ffd166, #ff9f68); transition: width 0.5s; }
+.ao-next { display: flex; margin-top: 24rpx; align-items: center; flex-wrap: wrap; gap: 10rpx; }
+.ao-next-label {
+  padding: 4rpx 12rpx; border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.14); color: #b9aef7; font-size: 18rpx;
+}
+.ao-next-name { color: #ffd166; font-size: 24rpx; font-weight: 600; }
+.ao-next-desc { color: #c9c2ef; font-size: 20rpx; }
+.ao-all-done { color: #ffd166; font-size: 24rpx; }
+
+/* 不依赖 gap：用固定 margin + nth-child，确保真机稳定排成 3 列 */
+.badge-grid { display: flex; flex-wrap: wrap; }
+.badge-card {
+  box-sizing: border-box;
+  display: flex;
+  width: calc((100% - 32rpx) / 3);
+  margin-right: 16rpx; margin-bottom: 16rpx;
+  padding: 26rpx 8rpx;
+  align-items: center;
+  flex-direction: column;
+  border-radius: 20rpx;
+  background: #ffffff;
+  box-shadow: 0 6rpx 20rpx rgba(26, 22, 51, 0.05);
+  animation: rise-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.badge-card:nth-child(3n) { margin-right: 0; }
+.badge-card.unlocked {
+  background: linear-gradient(160deg, #fffaf0 0%, #fff 60%);
+  box-shadow: 0 8rpx 24rpx rgba(199, 138, 18, 0.14);
+  border: 2rpx solid #f6e2b8;
+}
+.badge-card.locked { background: #fbfbfe; }
+.badge-medal {
+  display: flex; width: 76rpx; height: 76rpx;
+  align-items: center; justify-content: center;
+  border-radius: 50%;
+}
+.badge-medal.on {
+  background: linear-gradient(135deg, #ffd977, #f0a93b);
+  box-shadow: 0 6rpx 16rpx rgba(240, 169, 59, 0.4);
+}
+.badge-medal.off { background: #eeecf8; }
+.badge-symbol { font-size: 30rpx; font-weight: 700; color: #8a5a08; }
+.badge-medal.off .badge-symbol { color: #a09ab8; }
+.badge-title { margin-top: 14rpx; color: #17152b; font-size: 22rpx; font-weight: 600; text-align: center; }
+.badge-card.locked .badge-title { color: #8a85a5; }
+.badge-desc { margin-top: 6rpx; color: #a09ab8; font-size: 18rpx; text-align: center; line-height: 1.4; }
+.badge-state { margin-top: 14rpx; padding: 4rpx 12rpx; border-radius: 10rpx; background: #f0eef8; color: #a09ab8; font-size: 18rpx; }
+.badge-state.got { background: #fff0d4; color: #b8791c; font-weight: 600; }
+
+.ladder { padding: 12rpx 24rpx; border-radius: 24rpx; background: #ffffff; box-shadow: 0 6rpx 20rpx rgba(26, 22, 51, 0.05); }
+.ladder-item { display: flex; padding: 18rpx 0; align-items: center; border-bottom: 2rpx solid #f2f0fa; }
+.ladder-item:last-child { border-bottom: none; }
+.ladge-dot { width: 16rpx; height: 16rpx; margin-right: 16rpx; border-radius: 50%; background: #d8d4ef; }
+.ladder-item.current .ladge-dot { background: #6f5ce8; box-shadow: 0 0 0 6rpx #e8e4ff; }
+.ladder-level { width: 90rpx; color: #6b6585; font-size: 22rpx; }
+.ladder-item.current .ladder-level { color: #5a49c4; font-weight: 700; }
+.ladder-title { flex: 1; color: #17152b; font-size: 24rpx; }
+.ladder-xp { color: #a09ab8; font-size: 20rpx; }
+
+.setting-card { padding: 32rpx; border-radius: 24rpx; background: #ffffff; box-shadow: 0 6rpx 20rpx rgba(26, 22, 51, 0.05); }
+.field-label { display: block; margin: 24rpx 0 12rpx; color: #6b6585; font-size: 24rpx; }
+.field-input, .picker {
+  box-sizing: border-box; width: 100%; height: 76rpx;
+  padding: 0 22rpx; border-radius: 16rpx;
+  background: #f6f6fa; color: #17152b; font-size: 26rpx; line-height: 76rpx;
+}
+.field-hint { display: block; margin-top: 10rpx; color: #a09ab8; font-size: 22rpx; }
+.field-error { display: block; margin-top: 16rpx; color: #e05a5a; font-size: 24rpx; }
+.age-presets { display: flex; gap: 12rpx; }
+.age-opt { flex: 1; padding: 16rpx 0; border-radius: 14rpx; background: #f6f6fa; color: #6b6585; font-size: 24rpx; text-align: center; }
+.age-opt.active { background: #e8e4ff; color: #5a49c4; font-weight: 600; }
+.save-btn { margin-top: 36rpx; padding: 24rpx; border-radius: 18rpx; background: #6f5ce8; color: #ffffff; font-size: 28rpx; font-weight: 600; text-align: center; }
+
+.works-card { display: flex; flex-direction: column; margin-top: 24rpx; padding: 28rpx 32rpx; border-radius: 24rpx; background: linear-gradient(120deg, #2a2350, #4b3c91); }
+.wc-kicker { color: rgba(255,255,255,.6); font-size: 17rpx; letter-spacing: .14em; }
+.wc-title { margin-top: 10rpx; color: #fff; font-size: 28rpx; font-weight: 700; }
+.wc-sub { margin-top: 8rpx; color: rgba(255,255,255,.74); font-size: 19rpx; }
+
+.books-card { display: flex; flex-direction: column; margin-top: 16rpx; padding: 26rpx 32rpx; border-radius: 24rpx; background: #fff; border: 2rpx solid #e4dfff; }
+.bc-kicker { color: #8a85a5; font-size: 17rpx; letter-spacing: .14em; }
+.bc-title { margin-top: 10rpx; color: #2a2252; font-size: 28rpx; font-weight: 700; }
+.bc-sub { margin-top: 8rpx; color: #8a85a5; font-size: 19rpx; line-height: 1.6; }
+.account-card { margin-top: 24rpx; padding: 28rpx 32rpx; border-radius: 24rpx; background: #ffffff; box-shadow: 0 6rpx 20rpx rgba(26, 22, 51, 0.05); }
+.account-row { display: flex; align-items: center; justify-content: space-between; }
+.account-label { color: #6b6585; font-size: 26rpx; }
+.account-value { max-width: 60%; overflow: hidden; color: #17152b; font-size: 24rpx; text-overflow: ellipsis; white-space: nowrap; }
+.signout-btn { margin-top: 28rpx; padding: 22rpx; border-radius: 18rpx; background: #f6f6fa; color: #e05a5a; font-size: 28rpx; text-align: center; }
+.footer-note { display: block; margin-top: 32rpx; color: #a09ab8; font-size: 22rpx; text-align: center; }
+
+/* 成就进度内联条：从属于成就区，视觉弱于顶部玩家卡，解决层级并列问题 */
+.achievement-strip { display: flex; align-items: center; gap: 20rpx; padding: 22rpx 24rpx; margin-bottom: 24rpx; border-radius: 20rpx; background: #fff; box-shadow: 0 6rpx 20rpx rgba(26,22,51,0.05); }
+.as-ring { width: 84rpx; height: 84rpx; flex: 0 0 84rpx; border-radius: 50%; border: 6rpx solid #ffd166; display: flex; align-items: baseline; justify-content: center; padding-top: 22rpx; box-sizing: border-box; background: #fffaf0; }
+.as-num { color: #c78a12; font-size: 32rpx; font-weight: 800; }
+.as-denom { color: #b0a888; font-size: 18rpx; }
+.as-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.as-top { display: flex; align-items: center; justify-content: space-between; }
+.as-title { color: #3a3557; font-size: 25rpx; font-weight: 700; }
+.as-next { color: #8a85a5; font-size: 19rpx; max-width: 55%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.as-bar { height: 10rpx; margin: 12rpx 0 8rpx; border-radius: 6rpx; background: #eeecf6; overflow: hidden; }
+.as-bar-fill { height: 100%; border-radius: 6rpx; background: linear-gradient(90deg, #ffd166, #ff9f43); transition: width 0.5s; }
+.as-desc { color: #a09ab8; font-size: 19rpx; }
+
+/* 成就分组：借鉴小黑盒的分组胶囊 + 完成度 */
+.badge-group { margin-bottom: 28rpx; }
+.bg-head { display: flex; align-items: center; gap: 14rpx; margin: 0 6rpx 16rpx; }
+.bg-name { color: #2a2740; font-size: 25rpx; font-weight: 700; }
+.bg-capsule { padding: 4rpx 16rpx; border-radius: 20rpx; background: #e8e4ff; color: #5a49c4; font-size: 19rpx; font-weight: 600; }
+.badge-mini-bar { width: 80%; height: 8rpx; margin: 14rpx auto 0; border-radius: 6rpx; background: #f0eef8; overflow: hidden; }
+.badge-mini-fill { height: 100%; border-radius: 6rpx; background: #cfc9ea; }
+.badge-mini-fill.got { background: linear-gradient(90deg, #ffd977, #f0a93b); }
+.badge-progress { display: block; margin-top: 8rpx; color: #a09ab8; font-size: 18rpx; text-align: center; }
+.badge-card.unlocked .badge-progress { color: #c78a12; font-weight: 600; }
+
+@keyframes rise-in { from { opacity: 0; transform: translateY(24rpx); } to { opacity: 1; transform: translateY(0); } }

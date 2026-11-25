@@ -1,0 +1,51 @@
+<view class="login">
+    <view class="login-badge">✦</view>
+    <text class="login-eyebrow">START YOUR QUEST</text>
+    <text class="login-title">开启你的冒险</text>
+    <text class="login-desc">邮箱验证码登录 / 注册，无需密码</text>
+
+    <view class="login-field">
+        <text class="lf-icon">✉</text>
+        <input
+            class="login-input"
+            type="text"
+            placeholder="输入邮箱地址"
+            placeholder-class="login-placeholder"
+            value="{{email}}"
+            bindinput="onEmailInput"
+        />
+    </view>
+
+    <view class="login-row">
+        <view class="login-field login-field-code">
+            <text class="lf-icon">◆</text>
+            <input
+                class="login-input login-code"
+                placeholder="验证码"
+                placeholder-class="login-placeholder"
+                value="{{code}}"
+                bindinput="onCodeInput"
+                bindconfirm="submit"
+            />
+        </view>
+        <view
+            class="login-send {{sending || countdown > 0 ? 'login-send-disabled' : ''}}"
+            bindtap="sendCode"
+        >{{countdown > 0 ? countdown + 's 后重发' : (sending ? '发送中' : '获取验证码')}}</view>
+    </view>
+
+    <button class="login-button {{submitting ? 'is-submitting' : ''}}" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">
+        登录 / 注册 <text class="login-arrow">→</text>
+    </button>
+
+    <view class="login-notice notice-tip" wx:if="{{tip}}">
+        <text class="ln-icon">✓</text>
+        <text class="ln-text">{{tip}}</text>
+    </view>
+    <view class="login-notice notice-error" wx:if="{{error}}">
+        <text class="ln-icon">!</text>
+        <text class="ln-text">{{error}}</text>
+    </view>
+
+    <view class="login-agree">登录即代表同意 <text class="la-link">用户协议</text> 与 <text class="la-link">隐私政策</text></view>
+</view>

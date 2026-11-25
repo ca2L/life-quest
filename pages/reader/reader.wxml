@@ -1,0 +1,106 @@
+<view class="reader {{fontClass}}" style="height: {{readerHeight}};" bindtouchstart="onTouchStart" bindtouchend="onTouchEnd">
+
+  <view class="paper {{flipClass}}">
+    <view class="paper-spine"></view>
+    <view class="book-head">
+      <text class="bh-guide">{{guideTitle}}</text>
+      <text class="bh-label">{{card.label}}</text>
+    </view>
+
+    <scroll-view scroll-y class="paper-body">
+      <text class="rd-chapter">{{card.chapter}}</text>
+      <text class="rd-title">{{card.title}}</text>
+      <view class="rd-rule"></view>
+      <view class="rd-point" wx:for="{{card.points}}" wx:for-index="pi" wx:key="pi">
+        <view class="rd-dot"></view>
+        <text class="rd-point-text">{{item}}</text>
+      </view>
+      <view class="rd-action">
+        <text class="rd-action-label">今天可以</text>
+        <text class="rd-action-text">{{card.action}}</text>
+      </view>
+      <text class="rd-source">结构化摘编 · 非原文全文，完整内容见原仓库</text>
+      <view class="rd-tail">{{card.guideTitle}} · 第 {{card.no}} 张</view>
+    </scroll-view>
+
+    <view class="book-foot">
+      <text class="bf-chapter">{{card.chapter}}</text>
+      <text class="bf-page">{{pageText}}</text>
+    </view>
+  </view>
+
+  <view class="tap-zones">
+    <view class="tz tz-left" bindtap="goPrev"></view>
+    <view class="tz tz-mid" bindtap="toggleToolbar"></view>
+    <view class="tz tz-right" bindtap="goNext"></view>
+  </view>
+
+  <!-- 阅读工具栏：点中间区域呼出 / 收起 -->
+  <block wx:if="{{toolbarOpen}}">
+    <view class="tb-top">
+      <text class="tb-back" bindtap="goBack">← 返回</text>
+      <text class="tb-title">{{guideTitle}}</text>
+      <view class="tb-icons">
+        <text class="tb-icon" bindtap="openDrawer">目录</text>
+        <text class="tb-icon" bindtap="openSearch">搜索</text>
+        <text class="tb-icon {{isBookmarked ? 'on' : ''}}" bindtap="toggleBookmark">{{isBookmarked ? '★' : '☆'}}</text>
+        <text class="tb-icon" bindtap="cycleFont">Aa</text>
+      </view>
+    </view>
+    <view class="tb-bottom">
+      <view class="tb-track"><view class="tb-fill" style="width: {{progress}}%"></view></view>
+      <text class="tb-page">{{pageText}}</text>
+      <text class="tb-copy" bindtap="copyRepoLink">复制原文链接</text>
+    </view>
+  </block>
+
+  <!-- 目录抽屉 -->
+  <view wx:if="{{drawerOpen}}" class="drawer-mask" bindtap="closeDrawer">
+    <view class="drawer" catchtap="noop">
+      <view class="drawer-head">
+        <text class="dh-title">目录 · {{guideTitle}}</text>
+        <text class="dh-total">{{total}} 张卡</text>
+        <text class="dh-close" catchtap="closeDrawer">×</text>
+      </view>
+      <scroll-view scroll-y class="drawer-body">
+        <view class="dg" wx:for="{{chapters}}" wx:for-index="gi" wx:key="name">
+          <text class="dg-name">{{item.name}}</text>
+          <view class="dg-item" wx:for="{{item.items}}" wx:for-item="it" wx:for-index="ii" wx:key="no"
+            data-no="{{it.no}}" catchtap="jumpFromDrawer">
+            <text class="dg-no">{{it.no}}</text>
+            <text class="dg-title">{{it.title}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <!-- 跨指南全文搜索 -->
+  <view wx:if="{{searchOpen}}" class="search-mask" catchtap="noop">
+    <view class="search-panel">
+      <view class="sp-head">
+        <input class="sp-input" placeholder="搜全部 {{libraryTotal}} 张卡片 / 章节 / 菜名 / 课程"
+          value="{{query}}" bindinput="onSearchInput" focus="{{searchOpen}}" confirm-type="search" />
+        <text class="sp-close" catchtap="closeSearch">×</text>
+      </view>
+      <scroll-view scroll-y class="sp-body">
+        <view wx:if="{{!query}}" class="sp-hint">
+          <text class="sp-hint-title">全书搜索</text>
+          <text class="sp-hint-line">试试：红烧肉 / 酸辣土豆丝 / 保险 / 操作系统 / 编译原理 / 李宏毅</text>
+          <text class="sp-hint-line">可搜章节名、菜名、课程名与要点；点结果直接跳到那张卡。</text>
+        </view>
+        <view wx:elif="{{!results.length}}" class="sp-hint">没有找到相关卡片，换个关键词试试</view>
+        <view class="sp-result" wx:for="{{results}}" wx:for-index="ri" wx:key="ri"
+          data-guide="{{item.guide}}" data-no="{{item.no}}" catchtap="jumpFromSearch">
+          <view class="sp-result-top">
+            <text class="sp-guide">{{item.guideTitle}}</text>
+            <text class="sp-no">NO.{{item.no}}</text>
+          </view>
+          <text class="sp-title">{{item.title}}</text>
+          <text class="sp-snippet">{{item.snippet}}</text>
+          <text class="sp-chapter">{{item.chapter}} →</text>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

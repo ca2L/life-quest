@@ -1,0 +1,30 @@
+.mp-ball {
+  position: fixed; z-index: 80; right: 22rpx; bottom: 136rpx;
+  display: flex; align-items: center; max-width: 520rpx;
+  padding: 14rpx 16rpx 14rpx 18rpx; border-radius: 40rpx;
+  background: #ffffff; border: 2rpx solid #ece9fa;
+  box-shadow: 0 10rpx 30rpx rgba(40, 30, 90, 0.16);
+}
+.mp-eq {
+  display: flex; flex-shrink: 0; width: 40rpx; height: 40rpx; margin-right: 14rpx;
+  align-items: flex-end; justify-content: center; border-radius: 12rpx;
+  background: #f0edfd;
+}
+.mp-bar { width: 5rpx; margin: 0 2rpx; border-radius: 3rpx; background: #6f5ce8; animation: mpBounce 0.9s ease-in-out infinite alternate; }
+.mp-bar.b1 { height: 14rpx; }
+.mp-bar.b2 { height: 22rpx; animation-delay: 0.2s; }
+.mp-bar.b3 { height: 17rpx; animation-delay: 0.4s; }
+.mp-eq.paused .mp-bar { animation-play-state: paused; height: 10rpx; }
+@keyframes mpBounce { from { transform: scaleY(0.6); } to { transform: scaleY(1.35); } }
+
+.mp-text { display: flex; flex: 1; min-width: 0; flex-direction: column; margin-right: 10rpx; }
+.mp-name { overflow: hidden; color: #17152b; font-size: 22rpx; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.mp-tag { margin-top: 3rpx; color: #a09ab8; font-size: 17rpx; }
+.mp-tag.bg { color: #5a49c4; }
+
+.mp-btn {
+  display: flex; flex-shrink: 0; width: 48rpx; height: 48rpx; margin-left: 8rpx;
+  align-items: center; justify-content: center; border-radius: 50%;
+  background: #f0edfd; color: #6f5ce8; font-size: 24rpx; font-weight: 700;
+}
+.mp-btn.next { font-size: 32rpx; }

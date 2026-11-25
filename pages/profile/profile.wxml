@@ -1,0 +1,140 @@
+<view class="page">
+  <view wx:if="{{authState === 'checking'}}" class="state-card">
+    <view class="spinner"></view>
+    <text class="state-title">正在加载…</text>
+  </view>
+
+  <view wx:elif="{{authState === 'signed-out'}}" class="state-card login-wrap">
+    <view class="login-hero">
+      <text class="login-eyebrow">LIFE · MAIN · QUEST</text>
+      <text class="login-title">把一生，活成\n一场值得通关的冒险</text>
+      <text class="login-desc">人生主线任务 · 记录你的进度、故事与足迹</text>
+    </view>
+    <login-panel bind:signedin="onSignedIn" />
+  </view>
+
+  <view wx:else class="content">
+    <view class="player-card">
+      <view class="player-glow"></view>
+      <view class="player-head">
+        <view class="avatar">{{player.level}}</view>
+        <view class="player-meta">
+          <text class="player-eyebrow">ADVENTURER · LV.{{player.level}}</text>
+          <text class="player-title">{{player.title}}</text>
+          <text class="player-level">累计 {{player.xp}} XP</text>
+        </view>
+      </view>
+      <view class="xp-bar"><view class="xp-fill" style="width: {{player.progressPercent}}%"></view></view>
+      <text class="xp-hint">距下一级还需 {{player.nextLevelXp - player.currentLevelXp}} XP</text>
+    </view>
+
+    <view class="stats-row">
+      <view class="stat"><text class="stat-num">{{checkinCount}}</text><text class="stat-label">累计打卡</text></view>
+      <view class="stat"><text class="stat-num">{{streak}}</text><text class="stat-label">当前连击</text></view>
+      <view class="stat"><text class="stat-num">{{bestStreak}}</text><text class="stat-label">最佳连击</text></view>
+      <view class="stat"><text class="stat-num">{{badges.unlockedCount}}</text><text class="stat-label">解锁徽章</text></view>
+    </view>
+
+    <view wx:if="{{loadError}}" class="error-bar" bindtap="handleRetry">
+      <text>{{loadError}}（点击重试）</text>
+    </view>
+
+    <view class="section-head">
+      <text class="section-title">成就徽章</text>
+      <text class="section-tip">{{badges.unlockedCount}} / {{badges.total}} 已解锁</text>
+    </view>
+
+    <!-- 成就进度：作为「成就区」内部的从属条目，不再与顶部玩家卡平级并排 -->
+    <view class="achievement-strip">
+      <view class="as-ring">
+        <text class="as-num">{{badges.unlockedCount}}</text>
+        <text class="as-denom">/{{badges.total}}</text>
+      </view>
+      <view class="as-body">
+        <view class="as-top">
+          <text class="as-title">成就进度 {{badges.percent}}%</text>
+          <text wx:if="{{badges.nextLocked}}" class="as-next">下一枚 {{badges.nextLocked.icon}} {{badges.nextLocked.name}}</text>
+        </view>
+        <view class="as-bar"><view class="as-bar-fill" style="width: {{badges.percent}}%"></view></view>
+        <text wx:if="{{badges.nextLocked}}" class="as-desc">解锁条件：{{badges.nextLocked.desc}}</text>
+        <text wx:else class="as-desc">🏆 全部成就已解锁，你就是传说本身</text>
+      </view>
+    </view>
+
+    <!-- 成就分组：借鉴小黑盒统计页，按组展示，每项带完成度进度条 -->
+    <view class="badge-group" wx:for="{{badgeGroups}}" wx:for-item="group" wx:key="name">
+      <view class="bg-head">
+        <text class="bg-name">{{group.name}}</text>
+        <view class="bg-capsule">{{group.got}}/{{group.total}}</view>
+      </view>
+      <view class="badge-grid">
+        <view class="badge-card {{item.unlocked ? 'unlocked' : 'locked'}}" wx:for="{{group.items}}" wx:key="id">
+          <view class="badge-medal {{item.unlocked ? 'on' : 'off'}}">
+            <text class="badge-symbol">{{item.unlocked ? item.icon : '?'}}</text>
+          </view>
+          <text class="badge-title">{{item.name}}</text>
+          <text class="badge-desc">{{item.desc}}</text>
+          <view class="badge-mini-bar"><view class="badge-mini-fill {{item.unlocked ? 'got' : ''}}" style="width: {{item.progress}}%"></view></view>
+          <text class="badge-progress">{{item.progress}}%</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-head">
+      <text class="section-title">等级阶梯</text>
+    </view>
+    <view class="ladder">
+      <view class="ladder-item {{item.current ? 'current' : ''}}" wx:for="{{ladder}}" wx:key="level">
+        <view class="ladge-dot"></view>
+        <text class="ladder-level">Lv.{{item.level}}</text>
+        <text class="ladder-title">{{item.title}}</text>
+        <text class="ladder-xp">{{item.xp}} XP</text>
+      </view>
+    </view>
+
+    <view class="section-head">
+      <text class="section-title">冒险者档案</text>
+    </view>
+    <view class="setting-card">
+      <text class="field-label">昵称</text>
+      <input class="field-input" placeholder="给自己起个称号" value="{{nickname}}" data-field="nickname" bindinput="onInput" />
+
+      <text class="field-label">出生日期</text>
+      <picker mode="date" value="{{birthday}}" end="{{todayKey}}" bindchange="onBirthdayChange">
+        <view class="picker">{{birthday || '点击选择出生日期'}}</view>
+      </picker>
+
+      <text class="field-label">目标年龄</text>
+      <view class="age-presets">
+        <view class="age-opt {{targetAge === item ? 'active' : ''}}" wx:for="{{agePresets}}" wx:key="*this" data-age="{{item}}" bindtap="selectAge">{{item}} 岁</view>
+      </view>
+      <text class="field-hint">用于生成人生进度格子，默认 80 岁</text>
+
+      <text class="field-error" wx:if="{{saveError}}">{{saveError}}</text>
+      <view class="save-btn" bindtap="saveProfile">{{saving ? '保存中…' : '保存档案'}}</view>
+    </view>
+
+    <view class="works-card" bindtap="goInsights">
+      <text class="wc-kicker">LIFE WORKS · 人生作品</text>
+      <text class="wc-title">把已记录的，编译成作品</text>
+      <text class="wc-sub">人生年报 · 原声带 · 资产负债表 · 存档迁移 →</text>
+    </view>
+
+    <view class="books-card" bindtap="goBooks">
+      <text class="bc-kicker">MY BOOKSHELF · 我的书架</text>
+      <text class="bc-title">已读 {{booksReadCount}} 本</text>
+      <text class="bc-sub">添加读过的书 / 导入 CSV · 年度书墙 · 评分短评 · 开放导出 →</text>
+    </view>
+
+    <view class="account-card">
+      <view class="account-row">
+        <text class="account-label">登录账号</text>
+        <text class="account-value">{{userEmail}}</text>
+      </view>
+      <view class="signout-btn" bindtap="signOut">退出登录</view>
+    </view>
+
+    <text class="footer-note">数据保存在云端，换设备登录后可继续你的冒险</text>
+  </view>
+</view>
+  <mini-player />

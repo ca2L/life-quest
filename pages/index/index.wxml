@@ -1,0 +1,639 @@
+<view class="page">
+  <view wx:if="{{authState === 'checking'}}" class="state-card">
+    <view class="spinner"></view>
+    <text class="state-title">正在进入你的世界…</text>
+  </view>
+
+  <view wx:elif="{{authState === 'signed-out'}}" class="state-card login-wrap">
+    <view class="login-hero">
+      <text class="login-eyebrow">LIFE · MAIN · QUEST</text>
+      <text class="login-title">把一生，活成\n一场值得通关的冒险</text>
+      <text class="login-desc">人生主线任务 · 记录你的进度、故事与足迹</text>
+    </view>
+    <login-panel bind:signedin="onSignedIn" />
+  </view>
+
+  <view wx:else class="content">
+    <view class="greeting">
+      <view class="greeting-text">
+        <text class="greeting-eyebrow">{{todayStr}} · DAILY BRIEF</text>
+        <text class="greeting-hello">{{greetingText}}，{{nickname}}</text>
+        <text class="greeting-sub">今天，继续推进你的主线。</text>
+      </view>
+      <view class="greeting-streak" wx:if="{{streak > 0}}">
+        <text class="streak-num">{{streak}}</text>
+        <text class="streak-unit">天连击</text>
+      </view>
+    </view>
+
+    <!-- ===== 人生 BGM · 顶部音乐模块 ===== -->
+    <view class="music-card {{musicPlaying ? 'playing' : ''}}" bindtap="openMusic">
+      <view class="mc-glow"></view>
+      <view class="mc-main">
+        <view class="mc-vinyl {{musicPlaying ? '' : 'paused'}}">
+          <view class="mc-vinyl-label">{{musicSceneIcon}}</view>
+        </view>
+        <view class="mc-text">
+          <text class="mc-eyebrow">LIFE SOUNDTRACK · 人生 BGM</text>
+          <text class="mc-title">{{musicSceneIcon}} {{musicSceneName}}音轨</text>
+          <text class="mc-track">{{musicSceneTrack}} · {{musicSceneGenre}}</text>
+        </view>
+        <view class="mc-play {{musicPlaying || trackPlaying ? 'active' : ''}}" catchtap="toggleFromCard">
+          <text class="mc-play-icon">{{trackPlaying || musicPlaying ? '‖' : '▶'}}</text>
+        </view>
+      </view>
+      <view class="mc-foot">
+        <view class="mc-eq {{musicPlaying ? '' : 'paused'}}">
+          <view class="mc-eq-bar b1"></view>
+          <view class="mc-eq-bar b2"></view>
+          <view class="mc-eq-bar b3"></view>
+          <view class="mc-eq-bar b4"></view>
+        </view>
+        <text class="mc-foot-text">{{trackPlaying ? '♪ 正在播放 · ' + currentTrackName : (musicPlaying ? '氛围播放中 · 洛雪音乐助手' : '点按开启氛围 · 洛雪音乐助手')}}</text>
+        <text class="mc-foot-cta">{{trackPlaying ? '继续播放' : '切换场景'}} →</text>
+      </view>
+    </view>
+
+    <!-- 玩家卡：左右紧凑版，把称号、XP、进度条收进一行，避免顶部过高 -->
+    <view class="player-card">
+      <view class="player-glow"></view>
+      <view class="player-top">
+        <view class="avatar-wrap">
+          <view class="avatar-ring"></view>
+          <view class="avatar">{{player.level}}</view>
+        </view>
+        <view class="player-meta">
+          <text class="player-eyebrow">LEVEL {{player.level}}</text>
+          <text class="player-title">{{player.title}}</text>
+          <text class="player-level">累计 {{player.xp}} XP · 距下一级 {{player.nextLevelXp - player.currentLevelXp}} XP</text>
+          <view class="xp-bar"><view class="xp-fill" style="width: {{player.progressPercent}}%"></view></view>
+        </view>
+        <view class="player-badge" bindtap="goProfile">
+          <text class="pb-num">{{badges.unlockedCount}}</text>
+          <text class="pb-total">/{{badges.total}} 徽章</text>
+          <text class="pb-pct">{{player.progressPercent}}%</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{loadError}}" class="error-bar" bindtap="handleRetry">
+      <text>{{loadError}}（点击重试）</text>
+    </view>
+
+    <!-- 关系熵提醒：一条、克制、可永久关闭，不评价、不催促 -->
+    <view wx:if="{{entropyReminder}}" class="entropy-bar">
+      <text class="eb-icon">♡</text>
+      <text class="eb-text">{{entropyReminder.hint}}</text>
+      <text class="eb-close" data-id="{{entropyReminder.id}}" catchtap="dismissEntropy">不再提示</text>
+    </view>
+
+    <view class="dashboard">
+      <view class="dash-item"><text class="dash-num">{{grid.yearsLived || 0}}</text><text class="dash-label">已走过年</text></view>
+      <view class="dash-divider"></view>
+      <view class="dash-item"><text class="dash-num">{{todayDone}}</text><text class="dash-label">完成主线</text></view>
+      <view class="dash-divider"></view>
+      <view class="dash-item"><text class="dash-num">{{totalQuests}}</text><text class="dash-label">任务总数</text></view>
+      <view class="dash-divider"></view>
+      <view class="dash-item"><text class="dash-num">{{bestStreak}}</text><text class="dash-label">最佳连击</text></view>
+    </view>
+
+    <!-- 人生作品入口：不新增采集，只把已有数据编译成年报 / 原声带 / 负债表 / 存档 -->
+    <view class="works-entry" bindtap="goInsights">
+      <view class="we-left">
+        <text class="we-kicker">LIFE WORKS · 人生作品</text>
+        <text class="we-title">把你已经记录的，编译成作品</text>
+        <text class="we-sub">人生年报 · 原声带 · 资产负债表 · 存档迁移</text>
+      </view>
+      <text class="we-arrow">→</text>
+    </view>
+
+    <view class="section-head">
+      <view class="section-title-wrap">
+        <text class="section-eyebrow">LIFE PROGRESS</text>
+        <text class="section-title">人生进度</text>
+      </view>
+      <text wx:if="{{grid}}" class="section-badge">{{grid.percent}}%</text>
+    </view>
+
+    <view wx:if="{{hasBirthday && grid}}" class="grid-card">
+      <view class="grid-top">
+        <text class="grid-stage">{{grid.stage.name}} · {{grid.stage.desc}}</text>
+        <view class="view-switch">
+          <text class="view-opt {{viewMode === 'life' ? 'active' : ''}}" data-mode="life" bindtap="setViewMode">全景</text>
+          <text class="view-opt {{viewMode === 'decade' ? 'active' : ''}}" data-mode="decade" bindtap="setViewMode">十年</text>
+        </view>
+      </view>
+
+      <!-- 全景：人生长卷（进度胶囊 + 阶段里程碑 + 十年完成度条） -->
+      <view wx:if="{{renderMode === 'overview'}}" class="overview-panel">
+        <view class="ov-hero">
+          <view class="ov-hero-top">
+            <view class="ov-ring">
+              <text class="ov-ring-num">{{grid.currentAge}}</text>
+              <text class="ov-ring-unit">岁</text>
+            </view>
+            <view class="ov-hero-copy">
+              <text class="ov-eyebrow">LIFE JOURNEY · 人生旅程</text>
+              <text class="ov-stage">{{grid.stage.name}} · {{grid.stage.desc}}</text>
+              <text class="ov-desc">已走过 {{grid.yearsLived}} 年 · 目标 {{grid.targetAge}} 岁</text>
+            </view>
+            <view class="ov-pct">{{grid.percent}}<text>%</text></view>
+          </view>
+          <view class="ov-main-bar"><view class="ov-main-fill" style="width: {{grid.percent}}%"></view></view>
+          <view class="ov-main-meta"><text>已度过 {{grid.livedWeeks}} 周</text><text>剩余 {{grid.remainingWeeks}} 周</text></view>
+        </view>
+
+        <view class="ov-mile-label">人生阶段</view>
+        <view class="milestone-track">
+          <view class="milestone {{item.state}}" wx:for="{{milestones}}" wx:key="name">
+            <view class="ms-node"><view wx:if="{{item.state === 'current'}}" class="ms-pulse"></view></view>
+            <text class="ms-name">{{item.name}}</text>
+            <text class="ms-age">{{item.label}}</text>
+          </view>
+        </view>
+
+        <view class="ov-mile-label decade-label">十年进度</view>
+        <view class="decade-bars">
+          <view class="dbar-row {{item.isCurrent ? 'current' : ''}}" wx:for="{{decadeBlocks}}" wx:key="startAge">
+            <text class="dbar-label">{{item.label}}</text>
+            <view class="dbar-track"><view class="dbar-fill" style="width: {{item.pct}}%"></view></view>
+            <text class="dbar-pct">{{item.pct}}%</text>
+          </view>
+        </view>
+        <view class="ov-note">每个十年按已度过的年份计算完成度</view>
+      </view>
+
+      <!-- 十年 · 足迹故事：按年份把足迹钉在时间轴上 -->
+      <view wx:elif="{{renderMode === 'timeline'}}" class="timeline-wrap">
+        <view class="timeline-subhead">
+          <view class="view-switch sub">
+            <text class="view-opt {{decadeSubMode === 'story' ? 'active' : ''}}" data-mode="story" bindtap="setDecadeSubMode">足迹故事</text>
+            <text class="view-opt {{decadeSubMode === 'weeks' ? 'active' : ''}}" data-mode="weeks" bindtap="setDecadeSubMode">周格</text>
+          </view>
+          <text class="timeline-stat">{{grid.decadeStart}}–{{grid.decadeEnd - 1}}岁 · {{timeline.total}} 段回忆</text>
+        </view>
+
+        <scroll-view scroll-x class="tl-scroll">
+          <view class="tl-track">
+            <view class="tl-line"></view>
+            <view class="tl-year {{item.state}}" wx:for="{{timeline.years}}" wx:key="age"
+              data-age="{{item.age}}" bindtap="openAgeFootprints">
+              <view class="tl-node">
+                <view wx:if="{{item.state === 'now'}}" class="tl-node-core"></view>
+              </view>
+              <text class="tl-age">{{item.age}}</text>
+              <view class="tl-marks">
+                <view class="tl-mark" wx:for="{{item.marks}}" wx:for-item="mark" wx:for-index="mi" wx:key="mi"
+                  style="background: {{mark.color}}">{{mark.icon}}</view>
+                <text wx:if="{{item.more}}" class="tl-more">+{{item.more}}</text>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+
+        <view wx:if="{{timeline.total > 0}}" class="timeline-caption">
+          <text>点年份查看那一年的人生足迹 →</text>
+        </view>
+        <view wx:else class="timeline-caption empty">
+          <text>这十年还没有足迹，去「足迹」页记录第一段故事吧 →</text>
+        </view>
+      </view>
+
+      <!-- 十年 · 周格模式子切换入口（当 story 关闭时显示子切换，避免重复） -->
+      <view wx:elif="{{renderMode === 'canvas' || renderMode === 'fallback'}}" class="timeline-subhead">
+        <view class="view-switch sub">
+          <text class="view-opt {{decadeSubMode === 'story' ? 'active' : ''}}" data-mode="story" bindtap="setDecadeSubMode">足迹故事</text>
+          <text class="view-opt {{decadeSubMode === 'weeks' ? 'active' : ''}}" data-mode="weeks" bindtap="setDecadeSubMode">周格</text>
+        </view>
+      </view>
+
+      <!-- 十年 · canvas 精细周格子 -->
+      <canvas wx:if="{{renderMode === 'canvas'}}" type="2d" id="lifeGrid" class="grid-canvas"
+        style="height: {{(grid.decadeEnd - grid.decadeStart) * 11 + 24}}px"></canvas>
+
+      <!-- 无 canvas 能力的环境降级为 WXML 周格子 -->
+      <view wx:elif="{{renderMode === 'fallback'}}" class="fallback-grid fg-decade">
+        <view class="fg-row" wx:for="{{fallbackRows}}" wx:key="year">
+          <text class="fg-label">{{item.label}}</text>
+          <view class="fg-cells">
+            <view class="fg-cell cell-{{cell}}" wx:for="{{item.cells}}" wx:for-item="cell" wx:for-index="wi" wx:key="wi"></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="grid-legend">
+        <view class="legend-item"><view class="dot dot-now"></view><text>此刻</text></view>
+        <view class="legend-item"><view class="dot dot-lived"></view><text>已度过 {{grid.livedWeeks}} 周</text></view>
+        <view class="legend-item"><view class="dot dot-future"></view><text>剩余 {{grid.remainingWeeks}} 周</text></view>
+      </view>
+      <text class="grid-note">{{grid.yearsLived}} 岁 · 目标 {{grid.targetAge}} 岁 · 共 {{grid.totalWeeks}} 周</text>
+    </view>
+
+    <view wx:else class="empty-grid" bindtap="goProfile">
+      <text class="empty-icon">◷</text>
+      <text class="empty-text">设置生日，开启你的人生进度图</text>
+      <text class="empty-action">前往设置 →</text>
+    </view>
+
+    <view class="section-head">
+      <view class="section-title-wrap">
+        <text class="section-eyebrow">TODAY'S FOCUS</text>
+        <text class="section-title">今日焦点</text>
+      </view>
+      <text class="section-link" bindtap="goQuests">全部任务 →</text>
+    </view>
+
+    <view wx:if="{{activeQuests.length}}" class="quest-list">
+      <view class="quest-item" wx:for="{{activeQuests}}" wx:key="id">
+        <view class="quest-info">
+          <view class="quest-tags">
+            <text class="type-pill type-{{item.quest_type}}">{{item.quest_type === 'main' ? '主线' : '支线'}}</text>
+            <text class="quest-chapter">{{item.chapter}}</text>
+          </view>
+          <text class="quest-name">{{item.title}}</text>
+          <view class="quest-progress"><view class="quest-progress-fill" style="width: {{item.progressPercent}}%"></view></view>
+        </view>
+        <view class="quest-side">
+          <text class="quest-reward">+{{item.xp_reward}} XP</text>
+          <view class="quick-btn" data-id="{{item.id}}" catchtap="quickCheckIn">打卡</view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="quest-empty" bindtap="goQuests">
+      <text>还没有进行中的任务，去创建你的第一个主线任务 →</text>
+    </view>
+
+    <view class="section-head" wx:if="{{badges.recent.length}}">
+      <view class="section-title-wrap">
+        <text class="section-eyebrow">ACHIEVEMENTS</text>
+        <text class="section-title">最近解锁</text>
+      </view>
+      <text class="section-link" bindtap="goProfile">全部徽章 →</text>
+    </view>
+    <view wx:if="{{badges.recent.length}}" class="badge-strip">
+      <view class="badge-mini" wx:for="{{badges.recent}}" wx:key="id">
+        <text class="badge-icon">{{item.icon}}</text>
+        <text class="badge-name">{{item.name}}</text>
+      </view>
+    </view>
+
+    <view class="world-entry" bindtap="goWorld">
+      <view class="we-stars"></view>
+      <view class="we-icon">🗺️</view>
+      <view class="we-text">
+        <text class="we-eyebrow">OPEN WORLD · 开放世界</text>
+        <text class="we-title">点亮人生地图</text>
+        <text class="we-sub">已探索 {{world.explored}}/{{world.total}} 块土地 · {{characterCount}} 张角色卡</text>
+        <view class="we-bar"><view class="we-bar-fill" style="width: {{world.percent}}%"></view></view>
+      </view>
+      <text class="we-arrow">→</text>
+    </view>
+
+    <view class="footprint-entry" bindtap="goFootprints">
+      <view class="fpe-icon">◈</view>
+      <view class="fpe-text">
+        <text class="fpe-eyebrow">YOUR STORY</text>
+        <text class="fpe-title">人生足迹</text>
+        <text class="fpe-sub">记录走过的路、遇见的人、难忘的瞬间</text>
+      </view>
+      <text class="fpe-arrow">→</text>
+    </view>
+
+    <!-- ===== 人生书架 · 全量卡片 ===== -->
+    <view class="section-head">
+      <view class="section-title-wrap">
+        <text class="section-eyebrow">LIFE HANDBOOK · FULL LIBRARY</text>
+        <text class="section-title">人生书架</text>
+      </view>
+      <text class="section-badge">{{guides.length}} 份 · {{totalCards}} 张卡</text>
+    </view>
+    <text class="guide-intro">三份开源指南按真实章节、菜谱与课程全部拆成卡片，点进去像翻书一样读，还能全书搜索；完整正文见原仓库。</text>
+
+    <!-- 自己的书：已读数据入口（参考微信读书 + 开源阅读记录项目） -->
+    <view class="hbe-entry" bindtap="goBooks">
+      <text class="hbe-icon">📚</text>
+      <view class="hbe-body">
+        <text class="hbe-title">我的书架 · 已读 {{booksReadCount}} 本</text>
+        <text class="hbe-sub">手动添加 / CSV 导入已读数据 · 年度书墙 · 评分短评 · 开放导出</text>
+      </view>
+      <text class="hbe-arrow">›</text>
+    </view>
+
+    <view class="guide-list">
+      <view class="guide-row gr-{{item.id}}" wx:for="{{guides}}" wx:key="id"
+        data-guide="{{item.id}}" bindtap="openReader">
+        <view class="gr-cover">
+          <text class="gr-cover-icon">{{item.icon}}</text>
+          <text class="gr-cover-tag">{{item.tag}}</text>
+        </view>
+        <view class="gr-body">
+          <view class="gr-row-top">
+            <text class="gr-row-title">{{item.title}}</text>
+            <text class="gr-row-star">★ {{item.stars}}</text>
+          </view>
+          <text class="gr-row-repo">{{item.subtitle}}</text>
+          <text class="gr-row-brief">{{item.brief}}</text>
+          <view class="gr-row-foot">
+            <text class="gr-row-count">{{item.cardCount}} 张卡片 · {{item.contentCount}} 篇正文</text>
+            <text class="gr-row-cta">开始翻书 →</text>
+          </view>
+          <view class="gr-row-content" catchtap="openGuideContent" data-id="{{item.id}}">
+            <text class="grc-label">看具体内容</text>
+            <text class="grc-preview">{{item.contentPreview}}…</text>
+            <text class="grc-arrow">→</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 今日 6 张 · 每日随机推荐 ===== -->
+    <view class="section-head">
+      <view class="section-title-wrap">
+        <text class="section-eyebrow">DAILY PICKS · 6 CARDS</text>
+        <text class="section-title">今日 6 张</text>
+      </view>
+      <text class="section-badge">{{todayKey}} · 随机</text>
+    </view>
+    <text class="guide-intro">每天从 {{totalCards}} 张卡里抽 6 张（三份各 2 张），同一天不变、跨天换一批；点卡片翻页，点下方「照着做」直接看这一篇的正文（食材 / 做法 / 步骤）。</text>
+    <view class="pick-grid">
+      <view class="pick-card pc-{{item.guide}}" wx:for="{{todayPicks}}" wx:for-index="pi" wx:key="pi"
+        data-guide="{{item.guide}}" data-no="{{item.no}}" bindtap="openReader">
+        <view class="pc-top">
+          <text class="pc-guide">{{item.guideTitle}}</text>
+          <text class="pc-no">NO.{{item.no}}</text>
+        </view>
+        <text class="pc-title">{{item.shortTitle}}</text>
+        <text class="pc-chapter">{{item.shortChapter}}</text>
+        <text class="pc-cta">翻开这页 →</text>
+        <view wx:if="{{item.contentTitle}}" class="pc-content" data-pi="{{pi}}" catchtap="openPickContent">
+          <text class="pc-content-label">具体内容 · {{item.contentTag}}</text>
+          <text class="pc-content-title">{{item.contentTitle}}</text>
+          <text class="pc-content-cta">照着做 →</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 卡片阅读器：固定 rpx 高度，避免真机 vh 重算漂移（备用入口） -->
+    <view wx:if="{{guideSheetOpen}}" class="gs-mask" bindtap="closeGuide">
+      <view class="gs-sheet" catchtap="noop">
+        <view class="gs-handle"></view>
+        <view class="gs-head">
+          <text class="gs-icon gs-{{activeGuide.id}}">{{activeGuide.icon}}</text>
+          <view class="gs-head-text">
+            <text class="gs-title">{{activeGuide.title}}</text>
+            <text class="gs-repo">{{activeGuide.repo}}</text>
+          </view>
+          <text class="gs-close" catchtap="closeGuide">×</text>
+        </view>
+        <view class="gr-progress">
+          <view class="gr-progress-track"><view class="gr-progress-fill" style="width: {{cardProgress}}%"></view></view>
+          <text class="gr-page">{{cardIndex + 1}} / {{guideCards.length}}</text>
+        </view>
+        <swiper class="gr-swiper" current="{{cardIndex}}" bindchange="onCardChange" duration="260">
+          <swiper-item wx:for="{{guideCards}}" wx:key="no">
+            <view class="gr-card gr-card-{{activeGuide.id}}">
+              <view class="gr-card-top">
+                <text class="gr-no">{{item.no}}</text>
+                <text class="gr-label">{{item.label}}</text>
+              </view>
+              <text class="gr-card-title">{{item.title}}</text>
+              <view class="gr-points">
+                <view class="gr-point" wx:for="{{item.points}}" wx:for-item="pt" wx:key="*this">
+                  <view class="gr-point-dot"></view>
+                  <text class="gr-point-text">{{pt}}</text>
+                </view>
+              </view>
+              <view class="gr-action">
+                <text class="gr-action-label">今天可以</text>
+                <text class="gr-action-text">{{item.action}}</text>
+              </view>
+              <text class="gr-source">要点摘编 · 建议读原文</text>
+            </view>
+          </swiper-item>
+        </swiper>
+        <view class="gr-nav">
+          <view class="gr-nav-btn {{atFirst ? 'disabled' : ''}}" catchtap="prevCard">← 上一张</view>
+          <view class="gr-dots">
+            <view class="gr-dot {{idx === cardIndex ? 'active' : ''}}"
+              wx:for="{{guideCards}}" wx:for-index="idx" wx:key="no"
+              data-idx="{{idx}}" catchtap="jumpCard"></view>
+          </view>
+          <view class="gr-nav-btn {{atLast ? 'disabled' : ''}}" catchtap="nextCard">下一张 →</view>
+        </view>
+        <view class="gs-foot">
+          <view class="gs-copy" catchtap="copyGuideLink">复制原文链接</view>
+          <view class="gs-cancel" catchtap="closeGuide">关闭</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 书架正文内容：逐条展开，菜谱含食材与分步做法。固定 rpx 高度 + flex，避免真机 vh 漂移 -->
+    <view wx:if="{{guideContentOpen}}" class="gc-mask" bindtap="closeGuideContent">
+      <view class="gc-sheet" catchtap="noop">
+        <view class="gc-handle"></view>
+        <view class="gc-head">
+          <view class="gc-head-icon">{{activeGuide.icon}}</view>
+          <view class="gc-head-text">
+            <text class="gc-title">{{activeGuide.title}} · 具体内容</text>
+            <text class="gc-sub">{{guideContents.length}} 篇 · {{activeContentNo ? '已定位到今日推荐' : '照着做就行'}}</text>
+          </view>
+          <text class="gc-close" catchtap="closeGuideContent">×</text>
+        </view>
+        <scroll-view scroll-y class="gc-body" scroll-into-view="{{activeContentId}}" scroll-with-animation>
+          <view class="gc-item {{activeContentNo === item.no ? 'focus' : ''}}" wx:for="{{guideContents}}" wx:key="no" id="gc-{{item.no}}">
+            <view class="gc-item-top">
+              <text class="gc-no">{{item.no}}</text>
+              <text class="gc-tag">{{item.tag}}</text>
+              <text class="gc-meta">{{item.meta}}</text>
+            </view>
+            <text class="gc-item-title">{{item.title}}</text>
+            <text class="gc-intro">{{item.intro}}</text>
+            <view class="gc-block" wx:for="{{item.blocks}}" wx:for-item="bk" wx:key="label">
+              <text class="gc-block-label">{{bk.label}}</text>
+              <view class="gc-line" wx:for="{{bk.lines}}" wx:for-item="ln" wx:key="*this">
+                <view class="gc-line-dot"></view>
+                <text class="gc-line-text">{{ln}}</text>
+              </view>
+            </view>
+            <view class="gc-tip">
+              <text class="gc-tip-label">小贴士</text>
+              <text class="gc-tip-text">{{item.tip}}</text>
+            </view>
+          </view>
+          <text class="gc-note">内容为按主题原创整理，不是原仓库原文转载；完整内容请复制原文链接阅读。</text>
+        </scroll-view>
+        <view class="gc-foot">
+          <view class="gc-foot-primary" catchtap="copyGuideLink">复制原文链接</view>
+          <view class="gc-foot-cancel" catchtap="closeGuideContent">关闭</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 音乐模块详情：氛围开关 + 场景音轨 + 开源项目入口。固定 rpx 高度 + flex，避免真机 vh 漂移 -->
+    <view wx:if="{{musicSheetOpen}}" class="ms-mask" bindtap="closeMusic">
+      <view class="ms-sheet" catchtap="noop">
+        <view class="ms-handle"></view>
+        <view class="ms-head">
+          <view class="ms-head-icon">🎵</view>
+          <view class="ms-head-text">
+            <text class="ms-title">人生 BGM</text>
+            <text class="ms-repo">{{musicRepo.repo}}</text>
+          </view>
+          <text class="ms-close" catchtap="closeMusic">×</text>
+        </view>
+        <scroll-view scroll-y class="ms-body">
+          <view class="ms-player">
+            <view class="ms-vinyl {{musicPlaying ? '' : 'paused'}}">
+              <view class="ms-vinyl-label">{{musicSceneIcon}}</view>
+            </view>
+            <view class="ms-player-info">
+              <text class="ms-player-state">{{musicPlaying ? 'NOW PLAYING · 氛围中' : 'PAUSED · 已暂停'}}</text>
+              <text class="ms-player-scene">{{musicSceneIcon}} {{musicSceneName}}音轨</text>
+              <text class="ms-player-track">{{musicSceneTrack}}</text>
+              <text class="ms-player-genre">{{musicSceneGenre}}</text>
+            </view>
+            <view class="ms-player-btn {{musicPlaying ? 'active' : ''}}" catchtap="toggleMusic">
+              <text>{{musicPlaying ? '‖' : '▶'}}</text>
+            </view>
+          </view>
+          <text class="ms-hint">上方播放键是氛围开关；导入的本地音频与 MV 会在这里真播放（MV 带画面）。音频由全局播放器播放，关掉这个面板、切到别的页面都不会停。在线音乐请到洛雪音乐打开。</text>
+
+          <view class="ms-bg-card {{backgroundCapable ? 'ready' : ''}}">
+            <text class="ms-bg-head">{{backgroundCapable ? '♪ 后台播放已就绪' : 'ℹ 关于息屏 / 切微信继续播'}}</text>
+            <text class="ms-bg-body" wx:if="{{backgroundCapable}}">当前是网络音源或已上云的本地音源，切到微信聊天、锁屏息屏都会继续播；锁屏界面、通知栏和耳机上会出现系统播放面板，可以直接暂停 / 切歌——相当于系统级悬浮窗。左下角的播放球在任意页面都能控制。云端直链 1 小时有效，切歌时会自动续签。</text>
+            <text class="ms-bg-body" wx:else>微信限制：本地导入的音频无法直接进入后台播放通道（官方接口不支持本地路径）。现在可以点列表里的「☁ 上云」把文件传到云端，换成 https 直链后即可息屏续播（需登录，单文件 ≤20MB；签名直链 1 小时内有效，切歌 / 播完自动续签，连续息屏超过 1 小时属平台限制）。另外两条路：① 用「＋ 其他 App」粘贴可直接播放的 https 音频直链；② 右上角「···」→「浮窗」把小程序挂起来。MV 已有系统小窗，不受此限制。</text>
+          </view>
+
+          <text class="ms-label">挑一条今天的音轨</text>
+          <view class="ms-scenes">
+            <view class="ms-scene {{item.key === musicSceneKey ? 'active' : ''}}"
+              wx:for="{{musicScenes}}" wx:key="key"
+              data-key="{{item.key}}" catchtap="setMusicScene">
+              <text class="ms-scene-icon">{{item.icon}}</text>
+              <text class="ms-scene-name">{{item.name}}</text>
+              <text class="ms-scene-genre">{{item.genre}}</text>
+            </view>
+          </view>
+          <view class="ms-scene-tip">
+            <text class="ms-scene-tip-label">今天可以</text>
+            <text class="ms-scene-tip-text">{{musicSceneTip}}</text>
+          </view>
+
+          <text class="ms-label">我的音源 · 导入 / 导出</text>
+          <view class="ms-import-actions">
+            <view class="ms-ia-btn primary" catchtap="importLocalTrack">＋ 音频 / MV</view>
+            <view class="ms-ia-btn" catchtap="importAlbumVideo">＋ 相册 MV</view>
+            <view class="ms-ia-btn" catchtap="toggleImportPanel">＋ 其他 App</view>
+            <view class="ms-ia-btn" data-format="text" catchtap="exportMusicTracks">↥ 清单</view>
+            <view class="ms-ia-btn" data-format="json" catchtap="exportMusicTracks">↥ JSON</view>
+          </view>
+          <view wx:if="{{musicImportOpen}}" class="ms-import-panel">
+            <textarea class="ms-ip-input" placeholder="粘贴歌单分享链接 / 音源配置：每行「名称 | 链接」，或直接粘贴 JSON" value="{{musicImportText}}" bindinput="onImportInput" />
+            <view class="ms-ip-actions">
+              <view class="ms-ip-ok" catchtap="confirmImportExternal">导入</view>
+              <view class="ms-ip-cancel" catchtap="toggleImportPanel">取消</view>
+            </view>
+          </view>
+          <text class="ms-note">本地音频 / MV 从聊天会话选取（可先发给自己），也能从相册选一段视频。选中即自动保存到本机，不用再点保存，之后可以随时「改名」，或点「☁ 上云」存一份到云端以解锁息屏后台播放；离开这一页、切到任务/世界/足迹，音乐都会继续播，回来还在原处。MV 收起面板会缩成右下角浮窗，点「⤢ 悬浮小窗」或切页面会进入微信系统小窗，跨页面继续播（需基础库 2.11.0+）。视频格式建议 mp4 / mov。「其他 App」是粘贴对方分享的歌单链接 / 音源文本；导出的是可复制清单，给洛雪音乐等支持导入的 App 用。请只导入自己有权使用的文件，小程序读不到其他 App 的曲库，也不破解任何版权保护。</text>
+          <view wx:if="{{musicTracks.length}}" class="ms-tracks">
+            <view class="ms-track {{currentTrackIndex === ti && (trackPlaying || videoPlaying) ? 'playing' : ''}} {{item.missing ? 'broken' : ''}}"
+              wx:for="{{musicTracks}}" wx:for-index="ti" wx:key="id"
+              data-idx="{{ti}}" catchtap="playTrack">
+              <text class="mt-icon">{{item.source === 'local' ? (item.kind === 'video' ? '🎬' : '♪') : '↗'}}</text>
+              <view class="mt-text">
+                <text class="mt-name">{{item.name}}</text>
+                <text class="mt-meta {{item.missing ? 'warn' : ''}}">{{item.metaText}}</text>
+              </view>
+              <view class="mt-ops">
+                <text class="mt-edit" data-idx="{{ti}}" catchtap="openRenameTrack">改名</text>
+                <text wx:if="{{item.canUpload}}" class="mt-cloud {{item.isUploading ? 'busy' : ''}}"
+                  data-id="{{item.id}}" catchtap="uploadTrackToCloud">{{item.isUploading ? '上传中…' : '☁ 上云'}}</text>
+                <text wx:elif="{{item.cloudPath}}" class="mt-cloud done">✓ 云端已存</text>
+              </view>
+              <text class="mt-play {{currentTrackIndex === ti && (trackPlaying || videoPlaying) ? 'active' : ''}}">{{currentTrackIndex === ti && (trackPlaying || videoPlaying) ? '‖' : '▶'}}</text>
+              <text class="mt-del" data-id="{{item.id}}" catchtap="removeTrack">×</text>
+            </view>
+          </view>
+          <view wx:else class="ms-empty">还没有音源，点上面「＋ 音频 / MV」导入一个。导入后会自动保存，可以点「改名」自定义名称。</view>
+
+          <text class="ms-label">关于这个开源项目</text>
+          <view class="ms-repo-card">
+            <view class="ms-repo-top">
+              <text class="ms-repo-name">🖥️ {{musicRepo.label}}</text>
+              <text class="ms-repo-star">★ {{musicRepo.starsExact}}</text>
+            </view>
+            <view class="ms-meta">
+              <text class="ms-meta-pill">{{musicRepo.lang}}</text>
+              <text class="ms-meta-pill">{{musicRepo.license}}</text>
+              <text class="ms-meta-pill">★ {{musicSnapshot}} 快照</text>
+            </view>
+            <text class="ms-repo-desc">{{musicRepo.desc}}。开源免费、跨平台，音源由使用者自行配置，支持歌单、桌面歌词与无损格式。</text>
+            <text class="ms-repo-desc">移动端 {{musicMobile.repo}}（★ {{musicMobile.starsExact}}，{{musicMobile.lang}}）同样开源，出门也能接着听。</text>
+          </view>
+
+          <text class="ms-label">打开 / 了解</text>
+          <view class="ms-link" wx:for="{{musicLinks}}" wx:key="key"
+            data-url="{{item.url}}" catchtap="copyMusicLink">
+            <text class="ms-link-icon">{{item.icon}}</text>
+            <view class="ms-link-text">
+              <text class="ms-link-label">{{item.label}}</text>
+              <text class="ms-link-url">{{item.url}}</text>
+            </view>
+            <text class="ms-link-copy">复制</text>
+          </view>
+          <text class="ms-note">小程序个人主体不支持 web-view，GitHub 也无法配为业务域名，因此用「复制链接 → 浏览器打开」。洛雪音乐是第三方开源软件，请遵守其开源协议与所在地法规，仅用于个人学习使用；本项目与其无关联。</text>
+        </scroll-view>
+        <view wx:if="{{musicTracks.length}}" class="ms-player-bar">
+          <view class="mpb-info">
+            <text class="mpb-name">{{currentTrackName || '选一首开始播放'}}</text>
+            <text class="mpb-time">{{trackTimeText}}</text>
+          </view>
+          <view class="mpb-track"><view class="mpb-fill" style="width: {{trackProgress}}%"></view></view>
+          <view class="mpb-controls">
+            <text class="mpb-btn" catchtap="prevTrack">← 上一首</text>
+            <text class="mpb-btn main" catchtap="toggleTrackPlay">{{trackPlaying ? '‖ 暂停' : '▶ 播放'}}</text>
+            <text class="mpb-btn" catchtap="nextTrack">下一首 →</text>
+          </view>
+        </view>
+        <view class="ms-foot">
+          <view class="ms-foot-primary" data-url="{{musicRepo.url}}" catchtap="copyMusicLink">复制桌面端仓库链接</view>
+          <view class="ms-foot-cancel" catchtap="closeMusic">收起面板（播放不停）</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- MV 播放器独立于音乐弹层：弹层里是顶部大窗，关掉弹层缩成右下角浮窗，
+         切页面再由微信系统小窗接管。组件不随弹层销毁，视频才不会断。 -->
+    <view wx:if="{{videoSrc}}" class="mv-float {{musicSheetOpen ? 'in-sheet' : ''}} {{videoPip ? 'pip' : ''}}">
+      <video id="musicVideo" class="ms-video" src="{{videoSrc}}"
+        controls autoplay show-fullscreen-btn object-fit="contain"
+        auto-pause-if-navigate="{{false}}" auto-pause-if-open-native="{{false}}"
+        picture-in-picture-mode="{{pipMode}}" picture-in-picture-show-progress="{{true}}"
+        picture-in-picture-init-position="right,70"
+        bind:enterpictureinpicture="onEnterPip" bind:leavepictureinpicture="onLeavePip"
+        binderror="onVideoError"></video>
+      <view class="ms-video-bar">
+        <text wx:if="{{musicSheetOpen}}" class="ms-video-name">{{videoName}}{{videoPip ? ' · 小窗播放中' : ''}}</text>
+        <text class="ms-video-pip" catchtap="toggleVideoPip">{{videoPip ? '回到页面' : (musicSheetOpen ? '⤢ 悬浮小窗' : '⤢')}}</text>
+        <text class="ms-video-close" catchtap="closeVideo">{{musicSheetOpen ? '收起' : '×'}}</text>
+      </view>
+    </view>
+
+    <!-- 改名弹层：固定 px 居中卡片，键盘弹起也不会被顶飞 -->
+    <view wx:if="{{renameOpen}}" class="rn-mask" catchtap="cancelRename">
+      <view class="rn-sheet" catchtap="noop">
+        <text class="rn-title">编辑名称</text>
+        <text class="rn-tip">只改显示名，不动文件本身；最长 40 字</text>
+        <input class="rn-input" value="{{renameText}}" maxlength="40" focus
+          placeholder="给这首歌起个名字" placeholder-class="rn-ph"
+          confirm-type="done" bindinput="onRenameInput" bindconfirm="confirmRename" />
+        <view class="rn-actions">
+          <view class="rn-cancel" catchtap="cancelRename">取消</view>
+          <view class="rn-ok" catchtap="confirmRename">保存名称</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+  <mini-player hidden="{{musicSheetOpen || guideContentOpen || guideSheetOpen || renameOpen || !!videoSrc}}" bind:openmusic="onMiniPlayerOpen" />

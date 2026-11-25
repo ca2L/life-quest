@@ -1,0 +1,208 @@
+<view class="page">
+  <view class="topbar">
+    <text class="tb-title">人生作品</text>
+    <text class="tb-sub">不新增采集，只把已经记录的事编译成作品</text>
+  </view>
+
+  <view class="tabs">
+    <view class="tab {{tab === item.key ? 'active' : ''}}" wx:for="{{tabs}}" wx:key="key"
+      data-tab="{{item.key}}" bindtap="switchTab">{{item.name}}</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state">
+    <view class="spinner"></view>
+    <text class="state-title">正在编译你的人生存档…</text>
+  </view>
+
+  <view wx:elif="{{loadError}}" class="state">
+    <text class="state-title">{{loadError}}</text>
+    <view class="state-btn" bindtap="handleRetry">重新读取</view>
+  </view>
+
+  <scroll-view wx:else scroll-y class="body">
+
+    <view wx:if="{{degraded}}" class="warn-bar">
+      <text>部分云端数据没读到，以下用的是最近一次本地内容。{{warnings[0] || ''}}</text>
+    </view>
+
+    <!-- ===== 人生年报 ===== -->
+    <view wx:if="{{tab === 'report'}}" class="pane">
+      <view class="year-nav">
+        <text class="yn-btn" bindtap="prevYear">‹ 更早</text>
+        <view class="yn-mid">
+          <text class="yn-year">{{years[yearIndex]}}</text>
+          <text class="yn-label">年度叙事 · {{slides.length}} 页</text>
+        </view>
+        <text class="yn-btn" bindtap="nextYear">更近 ›</text>
+      </view>
+
+      <swiper class="slides" indicator-dots="{{false}}" current="{{slideIndex}}"
+        bindchange="onSlideChange" previous-margin="24rpx" next-margin="24rpx">
+        <swiper-item wx:for="{{slides}}" wx:key="no">
+          <view class="slide {{item.accent}}">
+            <text class="sl-kicker">{{item.kicker}}</text>
+            <text class="sl-title">{{item.title}}</text>
+            <text class="sl-body">{{item.body}}</text>
+            <view wx:if="{{item.metric}}" class="sl-metric">
+              <text class="sl-metric-num">{{item.metric}}</text>
+              <text class="sl-metric-label">{{item.metricLabel}}</text>
+            </view>
+            <text class="sl-foot">{{item.footnote}}</text>
+          </view>
+        </swiper-item>
+      </swiper>
+
+      <view class="dots">
+        <view class="dot {{slideIndex === idx ? 'on' : ''}}" wx:for="{{slides}}" wx:for-index="idx" wx:key="no"></view>
+      </view>
+
+      <view class="verdict">
+        <text class="vd-label">一句判断</text>
+        <text class="vd-text">{{verdict}}</text>
+      </view>
+
+      <view class="acts">
+        <view class="act primary" bindtap="saveReportImage">保存长图到相册</view>
+        <view class="act" bindtap="copyReportText">复制年报文案</view>
+      </view>
+      <text class="pane-note">年报不排名、不打分、不与任何人比较。数据缺失的年份会给「留白」文案，不会硬凑数字。</text>
+
+      <canvas type="2d" id="reportCanvas"
+        style="width:{{canvasW}}px;height:{{canvasH}}px;position:fixed;left:-9999px;top:0;"></canvas>
+    </view>
+
+    <!-- ===== 人生原声带 ===== -->
+    <view wx:elif="{{tab === 'soundtrack'}}" class="pane">
+      <view class="hero-card music">
+        <text class="hc-kicker">LIFE SOUNDTRACK</text>
+        <text class="hc-title">地点有歌，年份就有声音</text>
+        <text class="hc-body">{{soundtrackText}}</text>
+      </view>
+
+      <text class="sec-title">年份 BGM</text>
+      <view wx:if="{{yearTracks.length}}" class="list">
+        <view class="li" wx:for="{{yearTracks}}" wx:key="year">
+          <text class="li-year">{{item.year}}</text>
+          <view class="li-main">
+            <text class="li-name">♪ {{item.top.name}}</text>
+            <text class="li-sub">{{item.total}} 段足迹连着这首歌</text>
+          </view>
+        </view>
+      </view>
+      <view wx:else class="empty">还没有足迹与音乐关联。记录足迹时若正在播歌，会自动记下当时那一首。</view>
+
+      <text class="sec-title">点亮国家时的 BGM</text>
+      <view wx:if="{{countryTracks.length}}" class="list">
+        <view class="li" wx:for="{{countryTracks}}" wx:key="country">
+          <text class="li-flag">◉</text>
+          <view class="li-main">
+            <text class="li-name">{{item.country}}</text>
+            <text class="li-sub">{{item.top ? '♪ ' + item.top.name : '还没有配乐'}} · {{item.footprints}} 段足迹</text>
+          </view>
+        </view>
+      </view>
+      <view wx:else class="empty">还没有带地点的足迹。</view>
+
+      <text class="sec-title">足迹 × 歌 · 时间线</text>
+      <view wx:if="{{soundtrackItems.length}}" class="timeline">
+        <view class="tl-item" wx:for="{{soundtrackItems}}" wx:key="id">
+          <view class="tl-dot"></view>
+          <text class="tl-day">{{item.day}}</text>
+          <text class="tl-title">{{item.title}}{{item.place ? ' · ' + item.place : ''}}</text>
+          <text wx:if="{{item.trackName}}" class="tl-song">♪ {{item.trackName}}{{item.inferred ? '（按时间推断）' : ''}}</text>
+          <text wx:else class="tl-song dim">那年还没记下歌</text>
+        </view>
+      </view>
+      <view wx:else class="empty">还没有足迹。</view>
+      <text class="pane-note">「按时间推断」只是根据音源导入日期就近配的线索，不是事实；真正可靠的关联来自记录足迹时正在播放的那首歌。</text>
+    </view>
+
+    <!-- ===== 人生资产负债表 ===== -->
+    <view wx:elif="{{tab === 'balance'}}" class="pane">
+      <view class="hero-card balance">
+        <text class="hc-kicker">LIFE BALANCE SHEET</text>
+        <text class="hc-title">人生净值 · {{balance.netWorth}}</text>
+        <text class="hc-body">截至 {{balance.asOf}}。这是四个已建立账户的等权平均，不是评分，也不与任何人比较。</text>
+      </view>
+
+      <text class="sec-title">净值曲线（按年）</text>
+      <view class="chart">
+        <view class="bar-col" wx:for="{{balanceBars}}" wx:key="year">
+          <text class="bar-val">{{item.netWorth}}</text>
+          <view class="bar" style="height: {{item.height}}%"></view>
+          <text class="bar-year">{{item.year}}</text>
+        </view>
+      </view>
+
+      <text class="sec-title">五个账户</text>
+      <view class="accounts">
+        <view class="acc {{item.hasValue ? '' : 'none'}}" wx:for="{{balance.accounts}}" wx:key="key">
+          <view class="acc-head">
+            <text class="acc-icon">{{item.icon}}</text>
+            <text class="acc-name">{{item.name}}</text>
+            <text class="acc-badge {{item.basis}}">{{item.label}}</text>
+            <text class="acc-val">{{item.valueText}}</text>
+          </view>
+          <view wx:if="{{item.hasValue}}" class="acc-track"><view class="acc-fill" style="width: {{item.value}}%"></view></view>
+          <text class="acc-desc">{{item.desc}}</text>
+          <text wx:if="{{item.hasValue}}" class="acc-trend">{{item.trendText}} · 存量 {{item.raw}}</text>
+          <text wx:else class="acc-trend">当前不参与净值计算</text>
+        </view>
+      </view>
+
+      <text class="sec-title">判断，而不是指标</text>
+      <view class="judgments">
+        <view class="jd" wx:for="{{balance.judgments}}" wx:key="*this">
+          <text class="jd-dot">·</text><text class="jd-text">{{item}}</text>
+        </view>
+      </view>
+
+      <view class="caveats">
+        <text class="cv-head">数据边界（请读一下）</text>
+        <text class="cv-line" wx:for="{{balance.caveats}}" wx:key="*this">— {{item}}</text>
+        <text class="cv-line">— 技能账户里的阅读量来自「我的书架」真实录入的 {{archiveCounts.books}} 本书，不再是恒为 0 的阅读卡计数器。</text>
+      </view>
+    </view>
+
+    <!-- ===== 人生存档可迁移 ===== -->
+    <view wx:else class="pane">
+      <view class="hero-card archive">
+        <text class="hc-kicker">LIFE ARCHIVE / TAKE IT WITH YOU</text>
+        <text class="hc-title">数据主权属于你</text>
+        <text class="hc-body">一个承诺「玩到 120 岁」的 App，最大风险是 App 活不过用户。所以这里给你两份开放格式的完整快照，不依赖本 App 也能读。</text>
+      </view>
+
+      <view class="counts">
+        <view class="ct"><text class="ct-num">{{archiveCounts.quests}}</text><text class="ct-label">条主线</text></view>
+        <view class="ct"><text class="ct-num">{{archiveCounts.checkins}}</text><text class="ct-label">次打卡</text></view>
+        <view class="ct"><text class="ct-num">{{archiveCounts.footprints}}</text><text class="ct-label">段足迹</text></view>
+        <view class="ct"><text class="ct-num">{{archiveCounts.characters}}</text><text class="ct-label">位角色</text></view>
+        <view class="ct"><text class="ct-num">{{archiveCounts.musicTracks}}</text><text class="ct-label">条音源</text></view>
+        <view class="ct"><text class="ct-num">{{archiveCounts.books}}</text><text class="ct-label">本书</text></view>
+        <view class="ct"><text class="ct-num">{{archiveCounts.years}}</text><text class="ct-label">个年份</text></view>
+      </view>
+
+      <text class="sec-title">完整 JSON（可迁移）</text>
+      <view class="exp-card">
+        <text class="exp-desc">包含全部表、本地映射与 schema 版本说明。cloudPath 只是云端对象路径，不含签名 token；本地文件路径仅在本机有效。</text>
+        <view class="exp-acts">
+          <view class="act primary" bindtap="saveJson">保存 / 分享文件</view>
+          <view class="act" bindtap="copyJson">复制全部</view>
+        </view>
+      </view>
+
+      <text class="sec-title">年册 HTML（可读版）</text>
+      <view class="exp-card">
+        <text class="exp-desc">自包含单文件，无外部依赖，双击即可在浏览器打开，也能直接打印成册。同样不打分、不排名。</text>
+        <view class="exp-acts">
+          <view class="act primary" bindtap="saveHtml">保存 / 分享文件</view>
+          <view class="act" bindtap="copyHtml">复制全部</view>
+        </view>
+      </view>
+
+      <view wx:if="{{lastSavedPath}}" class="saved-path">最近保存：{{lastSavedPath}}</view>
+      <text class="pane-note">分享文件需要微信基础库支持；不支持时会自动退回「保存到小程序目录 + 复制内容」，不会出现点不动的按钮。</text>
+    </view>
+
+  </scroll-view>
+</view>

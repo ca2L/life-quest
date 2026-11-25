@@ -1,0 +1,43 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/quests/quests",
+    "pages/world/world",
+    "pages/footprints/footprints",
+    "pages/profile/profile",
+    "pages/globe-picker/globe-picker",
+    "pages/reader/reader",
+    "pages/insights/insights",
+    "pages/books/books"
+  ],
+  "window": {
+    "navigationBarTitleText": "人生主线任务",
+    "navigationBarBackgroundColor": "#1a1633",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f4f5fb",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#9a94b8",
+    "selectedColor": "#7c6cf0",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "人生" },
+      { "pagePath": "pages/quests/quests", "text": "任务" },
+      { "pagePath": "pages/world/world", "text": "世界" },
+      { "pagePath": "pages/footprints/footprints", "text": "足迹" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents",
+  "requiredPrivateInfos": [
+    "getLocation",
+    "chooseLocation"
+  ],
+  "requiredBackgroundModes": [
+    "audio"
+  ]
+}
