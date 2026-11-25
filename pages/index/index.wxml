@@ -50,11 +50,11 @@
       </view>
     </view>
 
-    <!-- swiper 容器：高度由 JS 实测量出注入；CSS min-height 仅作量高失败时的兜底 -->
-    <view class="swiper-wrap" style="{{wrapH ? 'height:' + wrapH + 'px' : ''}}">
-    <swiper class="main-swiper" style="{{wrapH ? 'height:100%' : ''}}" current="{{activeTab}}" bindchange="onTabSwiperChange" duration="240">
-      <swiper-item>
-        <scroll-view scroll-y class="tab-scroll" enhanced show-scrollbar="{{false}}">
+    <!-- 三个 tab 共用一个 scroll-view：不再用 swiper，彻底规避 swiper 高度塌陷与底部空白 -->
+    <view class="scroll-holder">
+      <scroll-view scroll-y class="tab-pane-scroll" enhanced show-scrollbar="{{false}}"
+        bindtouchstart="onTabTouchStart" bindtouchend="onTabTouchEnd">
+        <view wx:if="{{activeTab === 0}}" class="tab-pane">
 
     <!-- 玩家卡：左右紧凑版，把称号、XP、进度条收进一行，避免顶部过高 -->
     <view class="player-card">
@@ -303,11 +303,9 @@
       <text class="fpe-arrow">→</text>
     </view>
 
-      </scroll-view>
-      </swiper-item>
+        </view>
 
-      <swiper-item>
-        <scroll-view scroll-y class="tab-scroll" enhanced show-scrollbar="{{false}}">
+        <view wx:elif="{{activeTab === 1}}" class="tab-pane">
 
     <!-- ===== 人生书架 · 全量卡片 ===== -->
     <view class="section-head">
@@ -383,11 +381,9 @@
       </view>
     </view>
 
-      </scroll-view>
-      </swiper-item>
+        </view>
 
-      <swiper-item>
-        <scroll-view scroll-y class="tab-scroll" enhanced show-scrollbar="{{false}}">
+        <view wx:elif="{{activeTab === 2}}" class="tab-pane">
 
         <!-- ===== 人生 BGM ===== -->
         <view class="music-card {{musicPlaying ? 'playing' : ''}}" bindtap="openMusic">
@@ -453,9 +449,8 @@
         </view>
         <view class="open-sheet-btn" bindtap="openMusic">打开完整音乐面板（导入音源 / 后台播放设置）→</view>
 
+        </view>
       </scroll-view>
-      </swiper-item>
-    </swiper>
     </view>
 
     <!-- 卡片阅读器：固定 rpx 高度，避免真机 vh 重算漂移（备用入口） -->
@@ -604,7 +599,7 @@
             <text class="ms-scene-tip-text">{{musicSceneTip}}</text>
           </view>
 
-          <text class="ms-label">我的音源 · 导入 / 导出</text>
+          <text class="ms-label">音源 · 内置精选 + 我的音源</text>
           <view class="ms-import-actions">
             <view class="ms-ia-btn primary" catchtap="importLocalTrack">＋ 音频 / MV</view>
             <view class="ms-ia-btn" catchtap="importAlbumVideo">＋ 相册 MV</view>
@@ -619,7 +614,7 @@
               <view class="ms-ip-cancel" catchtap="toggleImportPanel">取消</view>
             </view>
           </view>
-          <text class="ms-note">本地音频 / MV 从聊天会话选取（可先发给自己），也能从相册选一段视频。选中即自动保存到本机，不用再点保存，之后可以随时「改名」，或点「☁ 上云」存一份到云端以解锁息屏后台播放；离开这一页、切到任务/世界/足迹，音乐都会继续播，回来还在原处。MV 收起面板会缩成右下角浮窗，点「⤢ 悬浮小窗」或切页面会进入微信系统小窗，跨页面继续播（需基础库 2.11.0+）。视频格式建议 mp4 / mov。「其他 App」是粘贴对方分享的歌单链接 / 音源文本；导出的是可复制清单，给洛雪音乐等支持导入的 App 用。请只导入自己有权使用的文件，小程序读不到其他 App 的曲库，也不破解任何版权保护。</text>
+          <text class="ms-note">列表顶部 5 首为内置精选（SoundHelix 公开演示音源，无需上传即可播放；真机需把 www.soundhelix.com 加入 downloadFile 合法域名，开发者工具勾选「不校验合法域名」即可试听）。下面的本地音频 / MV 从聊天会话选取（可先发给自己），也能从相册选一段视频。选中即自动保存到本机，不用再点保存，之后可以随时「改名」，或点「☁ 上云」存一份到云端以解锁息屏后台播放；离开这一页、切到任务/世界/足迹，音乐都会继续播，回来还在原处。MV 收起面板会缩成右下角浮窗，点「⤢ 悬浮小窗」或切页面会进入微信系统小窗，跨页面继续播（需基础库 2.11.0+）。视频格式建议 mp4 / mov。「其他 App」是粘贴对方分享的歌单链接 / 音源文本；导出的是可复制清单，给洛雪音乐等支持导入的 App 用。请只导入自己有权使用的文件，小程序读不到其他 App 的曲库，也不破解任何版权保护。</text>
           <view wx:if="{{musicTracks.length}}" class="ms-tracks">
             <view class="ms-track {{currentTrackIndex === ti && (trackPlaying || videoPlaying) ? 'playing' : ''}} {{item.missing ? 'broken' : ''}}"
               wx:for="{{musicTracks}}" wx:for-index="ti" wx:key="id"

@@ -766,7 +766,7 @@
 .hbe-arrow { color: #6f5ce8; font-size: 36rpx; }
 
 /* ── 首页 tab + swiper：微信读书式左右滑切换 ── */
-.page { height: 100vh; padding-bottom: 60rpx; overflow: hidden; display: flex; flex-direction: column; }
+.page { height: 100vh; box-sizing: border-box; padding: 44rpx 28rpx 0; overflow: hidden; display: flex; flex-direction: column; }
 .content { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .tab-bar {
   display: flex; gap: 8rpx; margin: 0 4rpx 20rpx; padding: 6rpx;
@@ -776,14 +776,11 @@
 .tab-item.active { background: #ffffff; box-shadow: 0 2rpx 8rpx rgba(23, 21, 43, 0.08); }
 .tab-label { color: #8a85a5; font-size: 27rpx; font-weight: 600; }
 .tab-item.active .tab-label { color: #17152b; }
-.swiper-wrap {
-  flex: none; min-height: 60vh;
-  position: relative; overflow: hidden;
-}
-.main-swiper {
-  position: absolute; left: 0; right: 0; top: 0; bottom: 0;
-}
-.tab-scroll { height: 100%; padding-bottom: 150rpx; box-sizing: border-box; }
+/* 单 scroll-view 承载三个 tab：父容器定高，scroll-view 绝对定位撑满，彻底避开 swiper 高度塌陷 */
+.scroll-holder { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.tab-pane-scroll { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+/* 底部留白一次给足：迷你播放器浮在上面，最后一屏内容可以完整滚上来 */
+.tab-pane { padding-bottom: 220rpx; box-sizing: border-box; }
 
 /* ── 音乐 tab：每日推荐 ── */
 .rec-list { margin-top: 8rpx; }

@@ -11,6 +11,10 @@
  */
 
 const TRACKS_KEY = 'lifeMusicTracks'
+// 内置曲目只读，隐藏名单与改名单独存，避免污染用户自己的音源数据
+const HIDDEN_BUILTIN_KEY = 'lifeHiddenBuiltinTracks'
+const BUILTIN_NAME_KEY = 'lifeBuiltinTrackNames'
+const BUILTIN_TRACKS = require('./builtin-tracks')
 const MAX_TRACKS = 100
 // 音频走 InnerAudioContext，视频（MV）走原生 <video> 组件，两者分开处理。
 const AUDIO_EXT = ['mp3', 'm4a', 'aac', 'wav', 'flac', 'ogg']
@@ -87,23 +91,30 @@ function localFileAlive(path) {
 
 function loadTracks() {
   const raw = safeRead(TRACKS_KEY, [])
-  if (!Array.isArray(raw)) return []
+  const own = Array.isArray(raw) ? raw.filter((t) => t && (t.path || t.url || t.name)) : []
   // 兼容旧数据：以前只存音频，没有 kind 字段。
-  return raw.filter((t) => t && (t.path || t.url || t.name)).slice(0, MAX_TRACKS)
-    .map((t) => {
-      const kind = t.kind || kindOf(t.path || t.name || '')
-      const withKind = Object.assign({}, t, { kind })
-      if (t.source === 'local' && t.path) {
-        withKind.missing = !localFileAlive(t.path)
-      } else {
-        withKind.missing = false
-      }
-      return withKind
-    })
+  const ownTracks = own.slice(0, MAX_TRACKS).map((t) => {
+    const kind = t.kind || kindOf(t.path || t.name || '')
+    const withKind = Object.assign({}, t, { kind })
+    if (t.source === 'local' && t.path) {
+      withKind.missing = !localFileAlive(t.path)
+    } else {
+      withKind.missing = false
+    }
+    return withKind
+  })
+  // 内置曲目排在自己的音源之后：上传的仍排最前，空用户也能立刻有歌可播
+  let hidden = safeRead(HIDDEN_BUILTIN_KEY, [])
+  if (!Array.isArray(hidden)) hidden = []
+  const names = safeRead(BUILTIN_NAME_KEY, {}) || {}
+  const builtins = BUILTIN_TRACKS
+    .filter((t) => hidden.indexOf(t.id) < 0)
+    .map((t) => Object.assign({}, t, { name: names[t.id] || t.name, missing: false }))
+  return ownTracks.concat(builtins).slice(0, MAX_TRACKS)
 }
 function saveTracks(list) {
-  // missing 是每次读取时现算的运行时状态，不写回存储，避免留下过期标记
-  const clean = (list || []).slice(0, MAX_TRACKS).map((t) => {
+  // missing 是每次读取时现算的运行时状态，不写回存储；内置曲目也不写回自己的音源
+  const clean = (list || []).filter((t) => !t.builtin).slice(0, MAX_TRACKS).map((t) => {
     const copy = Object.assign({}, t)
     delete copy.missing
     return copy
@@ -210,6 +221,14 @@ function addExternalTracks(text) {
   return { list: saveTracks(list), added: parsed.length }
 }
 function removeTrack(id) {
+  // 内置曲目：只记隐藏名单，不动用户自己的音源数据；隐藏后仍可通过清空名单恢复
+  if (BUILTIN_TRACKS.some((t) => t.id === id)) {
+    const hidden = safeRead(HIDDEN_BUILTIN_KEY, [])
+    const arr = Array.isArray(hidden) ? hidden.slice() : []
+    if (arr.indexOf(id) < 0) arr.push(id)
+    safeWrite(HIDDEN_BUILTIN_KEY, arr)
+    return loadTracks()
+  }
   return saveTracks(loadTracks().filter((t) => t.id !== id))
 }
 
@@ -221,6 +240,12 @@ function cleanName(name) {
 function renameTrack(id, name) {
   const next = cleanName(name)
   if (!id || !next) return loadTracks()
+  if (BUILTIN_TRACKS.some((t) => t.id === id)) {
+    const names = safeRead(BUILTIN_NAME_KEY, {}) || {}
+    names[id] = next
+    safeWrite(BUILTIN_NAME_KEY, names)
+    return loadTracks()
+  }
   return saveTracks(loadTracks().map((t) => (
     t.id === id ? Object.assign({}, t, { name: next }) : t
   )))
@@ -308,6 +333,7 @@ function fmtTime(sec) {
 
 module.exports = {
   TRACKS_KEY,
+  BUILTIN_TRACKS,
   LOCAL_EXT,
   AUDIO_EXT,
   VIDEO_EXT,
