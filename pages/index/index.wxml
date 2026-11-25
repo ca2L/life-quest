@@ -725,7 +725,7 @@
 
     <!-- 随机漫步抽卡弹层：纸感卡片 + 独占 overlay 层级 + 背景滚动隔离 -->
     <view wx:if="{{walkCard}}" class="rw-mask" catchtap="closeWalkCard" catchtouchmove="noop">
-      <view class="rw-card {{walkPulse ? 'rw-card-pulse' : ''}}" catchtap="noop">
+      <view class="rw-card" catchtap="noop">
         <view class="rw-top">
           <text class="rw-eyebrow">RANDOM WALK · 随机漫步</text>
           <view class="rw-refresh" catchtap="againRandomWalk">↻</view>

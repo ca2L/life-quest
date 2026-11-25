@@ -98,7 +98,7 @@ function sceneTagMatch(track, scene) {
     calm: ['piano', 'ambient', 'classical', '免费曲库'],
     cook: ['jazz', 'lounge', 'soul'],
     country: ['country', '乡村', 'folk', 'americana', 'acoustic'],
-    gaming: ['game', 'ost', 'chiptune', '游戏bgm', '电子'],
+    gaming: ['game', 'ost', 'chiptune', '游戏bgm', '主机', 'orchestral', 'epic', 'arcade', 'piano', 'retro', 'jrpg', 'ending', '电子'],
     zelda: ['zelda', 'hyrule', 'orchestral', 'epic', '塞尔达'],
   }
   const keys = table[scene] || []

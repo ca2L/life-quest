@@ -29,7 +29,7 @@ const SCENE_GENRES = {
   cook: ['jazz', 'lounge', 'soul'],
   // 以下三组为新增曲库：乡村 / 主机游戏 BGM / 塞尔达风格管弦致敬
   country: ['country', 'folk', 'americana'],
-  gaming: ['soundtrack', 'videogame', 'chiptune', 'electronic'],
+  gaming: ['soundtrack', 'videogame', 'chiptune', 'electronic', 'arcade', 'orchestral', 'epic'],
   zelda: ['orchestral', 'soundtrack', 'classical', 'epic'],
 }
 

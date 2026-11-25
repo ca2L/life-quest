@@ -8,8 +8,10 @@
  * 1. 真机正式版需要把 www.soundhelix.com 加入小程序后台「downloadFile 合法域名」；
  *    开发者工具可勾选「不校验合法域名」直接试听。
  * 2. 这些是器乐演示曲，不是流行歌曲，也不是任何游戏的官方原声。
- *    「塞尔达」条目是「海拉鲁风格管弦致敬示范」，与任天堂无关；
- *    官方音乐请到 Nintendo Music 等正规渠道收听。
+ *    「塞尔达」条目是「海拉鲁风格管弦致敬示范」，「主机 BGM」条目是
+ *    复古/管弦/街机/钢琴/尾章等常见配乐语汇的风格化示范，与任天堂、
+ *    Sony、Microsoft 及任何游戏 IP 无关；官方音乐请到 Nintendo Music
+ *    等正规渠道收听。
  * 3. 想要真正的乡村 / 游戏 BGM：配置 utils/free-library.js 的 Jamendo client_id
  *    拉取 CC 授权曲目，或在音乐面板导入自己有权使用的音源。
  * 4. 内置曲目不写入本地 storage（只存隐藏名单与改名），删除只是本机隐藏。
@@ -37,6 +39,14 @@ const RAW = [
   // 塞尔达风格致敬（管弦氛围示范，与任天堂无关）
   { no: 11, name: '海拉鲁风起', desc: '管弦 · 开阔冒险（风格致敬示范）', category: '塞尔达致敬', tags: 'zelda,hyrule,orchestral,塞尔达,内置精选' },
   { no: 12, name: '大师剑之光', desc: '管弦 · 史诗旋律（风格致敬示范）', category: '塞尔达致敬', tags: 'zelda,hyrule,epic,塞尔达,内置精选' },
+
+  // 各类主机游戏 BGM（风格化示范音源，非任何游戏/平台官方原声）
+  // 覆盖 chiptune / 管弦史诗 / 街机电子 / 治愈钢琴 / 尾章氛围五种常见主机配乐语汇。
+  { no: 13, name: '像素序曲', desc: '8-bit · 开机主题（复古主机风格）', category: '主机 BGM', tags: 'game,ost,chiptune,游戏bgm,主机,retro,内置精选' },
+  { no: 14, name: '史诗战场', desc: '管弦 · 大战前奏（日式 RPG 风格）', category: '主机 BGM', tags: 'game,ost,orchestral,epic,游戏bgm,主机,jrpg,内置精选' },
+  { no: 15, name: '街机回路', desc: '电子 · 高速关卡（街机风格）', category: '主机 BGM', tags: 'game,ost,electronic,arcade,游戏bgm,主机,内置精选' },
+  { no: 16, name: '掌机漫步', desc: '钢琴 · 小镇休整（治愈系风格）', category: '主机 BGM', tags: 'game,ost,piano,calm,游戏bgm,主机,内置精选' },
+  { no: 17, name: '终章存档', desc: '氛围 · 通关之后（尾章风格）', category: '主机 BGM', tags: 'game,ost,ambient,游戏bgm,主机,ending,内置精选' },
 ]
 
 module.exports = RAW.map((r) => ({

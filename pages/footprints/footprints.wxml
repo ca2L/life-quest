@@ -27,7 +27,7 @@
     </view>
 
     <!-- BGM 入口：统计来自真实绑定映射，点「去关联」可给已有足迹换歌 -->
-    <view class="bgm-entry" bindtap="openForm">
+    <view class="bgm-entry" bindtap="openBgmSheet">
       <text class="be-icon">♫</text>
       <view class="be-body">
         <text class="be-title">{{bgmBoundCount}} / {{allFeet.length}} 段足迹已关联 BGM</text>

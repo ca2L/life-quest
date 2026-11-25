@@ -907,7 +907,6 @@
   box-shadow: 0 30rpx 90rpx rgba(9, 7, 28, 0.34);
   animation: rwCardIn 0.34s cubic-bezier(0.18, 0.9, 0.24, 1.12) both;
 }
-.rw-card-pulse { animation: rwCardPulse 0.38s ease-in-out both; }
 .rw-top { display: flex; align-items: center; justify-content: space-between; }
 .rw-eyebrow {
   color: var(--brand, #6f5ce8); font-size: 19rpx; font-weight: 700; letter-spacing: 3rpx;
@@ -949,9 +948,4 @@
 @keyframes rwCardIn {
   from { opacity: 0; transform: translateY(32rpx) scale(0.94); }
   to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes rwCardPulse {
-  0% { opacity: 1; transform: translateY(0) scale(1); }
-  45% { opacity: 0.2; transform: translateY(10rpx) scale(0.97); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
 }

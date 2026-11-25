@@ -125,7 +125,6 @@ Page({
     // 随机漫步日历：点一次随机抽一条
     walkCount: 0,
     walkCard: null,
-    walkPulse: false,
   }),
 
   // 部分运行环境（如 H5 预览）没有 createSelectorQuery，必须检测后再用 canvas。
@@ -158,34 +157,21 @@ Page({
       }
       return
     }
-    this.setData({ walkCard: item, walkPulse: false })
+    // 直接换卡：入场动画只在弹层首次创建时播一次，切卡不再叠加动画，
+    // 避免旧版 rwCardIn 与 rwCardPulse 抢同一 animation 属性导致双闪。
+    this.setData({ walkCard: item })
   },
 
-  // 再来一条：旧卡先淡出再换文案，避免文字硬切；开关防止连点抖动
+  // 再来一条：只替换文案，不做任何 class 切换（防连点抖动由 randomWalk.pick 内部去重保证）
   againRandomWalk() {
-    if (this._walkSwitching) return
-    this._walkSwitching = true
-    this.setData({ walkPulse: false })
-    setTimeout(() => {
-      // 淡出期间用户可能已关闭弹窗，此时不再回填
-      if (!this.data.walkCard) {
-        this._walkSwitching = false
-        return
-      }
-      const item = randomWalk.pick()
-      if (item && item.text) {
-        this.setData({ walkCard: item, walkPulse: true })
-      }
-      setTimeout(() => {
-        this.setData({ walkPulse: false })
-        this._walkSwitching = false
-      }, 400)
-    }, 30)
+    const item = randomWalk.pick()
+    if (item && item.text) {
+      this.setData({ walkCard: item })
+    }
   },
 
   closeWalkCard() {
-    this._walkSwitching = false
-    this.setData({ walkCard: null, walkPulse: false })
+    this.setData({ walkCard: null })
   },
 
   copyShortcutLink() {
