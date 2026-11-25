@@ -50,9 +50,9 @@
       </view>
     </view>
 
-    <!-- swiper 外面包一层绝对定位容器：微信 swiper 不响应 flex:1，必须用 inset 强制撑满 -->
-    <view class="swiper-wrap">
-    <swiper class="main-swiper" current="{{activeTab}}" bindchange="onTabSwiperChange" duration="240">
+    <!-- swiper 容器：高度由 JS 实测量出注入；CSS min-height 仅作量高失败时的兜底 -->
+    <view class="swiper-wrap" style="{{wrapH ? 'height:' + wrapH + 'px' : ''}}">
+    <swiper class="main-swiper" style="{{wrapH ? 'height:100%' : ''}}" current="{{activeTab}}" bindchange="onTabSwiperChange" duration="240">
       <swiper-item>
         <scroll-view scroll-y class="tab-scroll" enhanced show-scrollbar="{{false}}">
 

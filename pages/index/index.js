@@ -125,6 +125,8 @@ Page({
     // 随机漫步日历：点一次随机抽一条
     walkCount: 0,
     walkCard: null,
+    // swiper 容器高度：微信 swiper 不响应 flex，用实测量出的 px 高度注入
+    wrapH: 0,
   }),
 
   // 部分运行环境（如 H5 预览）没有 createSelectorQuery，必须检测后再用 canvas。
@@ -146,6 +148,31 @@ Page({
     // 每日推荐：先出本地结果，免费曲库同步完再刷新一次
     this.loadDailyRecommend()
     this.syncFreeLibrary()
+  },
+
+  // 量出 tab 栏下方到页面内容底部的真实高度，注入容器和 swiper。
+  // 底部留白只在这里扣一次（.page 的 padding-bottom 已含在 page rect 内），避免上下都空。
+  measureWrap() {
+    try {
+      if (typeof wx === 'undefined' || typeof wx.createSelectorQuery !== 'function') return
+      const info = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : null
+      const width = info && info.windowWidth ? info.windowWidth : 375
+      const ratio = width / 750
+      const padBottom = 60 * ratio
+      const tabGap = 20 * ratio
+      wx.createSelectorQuery()
+        .select('.page').boundingClientRect()
+        .select('.tab-bar').boundingClientRect()
+        .exec((rects) => {
+          const page = rects && rects[0]
+          const tab = rects && rects[1]
+          if (!page || !tab || !tab.bottom) return
+          const pageBottom = page.bottom - padBottom
+          const limit = info && info.windowHeight ? info.windowHeight : pageBottom
+          const h = Math.floor(Math.min(pageBottom, limit) - tab.bottom - tabGap)
+          if (h > 120 && Math.abs(h - this.data.wrapH) > 2) this.setData({ wrapH: h })
+        })
+    } catch (e) { /* 量不出就靠 CSS min-height 兜底 */ }
   },
 
   // 随机漫步日历：每次点击抽一条，来自飞书多维表格导出的条目数据
@@ -222,6 +249,9 @@ Page({
 
   onShow() {
     this.restore()
+    // 从其他页面返回、或提醒条异步出现后，重新校准容器高度
+    setTimeout(() => this.measureWrap(), 300)
+    setTimeout(() => this.measureWrap(), 1200)
     try {
       this.setData({ booksReadCount: bookshelf.statsOf(bookshelf.loadBooks(), todayStr(), bookshelf.getGoal()).readCount })
     } catch (e) { /* 书架数据不可用时不影响首页 */ }
@@ -280,7 +310,7 @@ Page({
         this.setData({
           authState: 'signed-in',
           loadError: '云服务暂时不稳定，数据仍是最近一次的内容',
-        })
+        }, () => this.measureWrap())
         return
       }
       this.setData({
@@ -289,7 +319,7 @@ Page({
       })
       return
     }
-    this.setData({ authState: 'signed-in' })
+    this.setData({ authState: 'signed-in' }, () => this.measureWrap())
     await this.loadData()
   },
 
@@ -380,6 +410,7 @@ Page({
       entropyReminder: entropy.reminder,
     }, () => {
       if (grid) this.scheduleDraw()
+      this.measureWrap()
     })
   },
 

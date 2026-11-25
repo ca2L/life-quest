@@ -776,9 +776,8 @@
 .tab-item.active { background: #ffffff; box-shadow: 0 2rpx 8rpx rgba(23, 21, 43, 0.08); }
 .tab-label { color: #8a85a5; font-size: 27rpx; font-weight: 600; }
 .tab-item.active .tab-label { color: #17152b; }
-.main-swiper { flex: 1; min-height: 0; }
 .swiper-wrap {
-  flex: 1; min-height: 0;
+  flex: none; min-height: 60vh;
   position: relative; overflow: hidden;
 }
 .main-swiper {
